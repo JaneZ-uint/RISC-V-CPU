@@ -8,8 +8,9 @@ from assassyn import utils
 
 from opcodes import *
 from decoder import *
+from execute import *
+from bypass import *
 from writeback import *
-from memory_access import *
 import sys as py_sys
 
 class Execution(Module):
@@ -17,14 +18,16 @@ class Execution(Module):
     super().__init__("execution")
 
     self.add_submodule(Decoder())
-    self.add_submodule(MemoryAccess())
+    self.add_submodule(Execute())
+    self.add_submodule(Bypass())
     self.add_submodule(WriteBack())
 
   def elaborate(self, platform):
     m = Module()
 
     m.submodules.decoder = self.submodules["decoder"]
-    m.submodules.memory_access = self.submodules["memory_access"]
+    m.submodules.execute = self.submodules["execute"]
+    m.submodules.bypass = self.submodules["bypass"]
     m.submodules.write_back = self.submodules["write_back"]
 
     return m
