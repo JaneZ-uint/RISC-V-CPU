@@ -1,86 +1,104 @@
 `timescale 1ns / 1ps
-`include "../src/defines.v"
+`include "defines.v"
 
 module testbench;
 
     reg clk;
     reg rst;
     
-    wire [`InstBus] inst;
+    // Instruction Memory
+    reg [`InstBus] inst_mem [0:1023];
     wire [`InstAddrBus] inst_addr;
     wire inst_ce;
+    reg [`InstBus] inst_i;
     
-    wire [`DataBus] mem_data_i;
-    wire [`DataBus] mem_addr_o;
+    // Data Memory
+    reg [`DataBus] data_mem [0:1023];
+    wire [`DataBus] mem_addr;
     wire [`DataBus] mem_data_o;
-    wire mem_we_o;
-    wire mem_ce_o;
-    wire [3:0] mem_sel_o;
-    
-    // Instantiate CPU
-    naive_cpu u_cpu(
+    wire mem_we;
+    wire mem_ce;
+    wire [3:0] mem_sel;
+    reg [`DataBus] mem_data_i;
+
+    naive_cpu u_naive_cpu(
         .clk(clk),
         .rst(rst),
-        .inst_i(inst),
+        
+        .inst_i(inst_i),
         .inst_addr_o(inst_addr),
         .inst_ce_o(inst_ce),
+        
         .mem_data_i(mem_data_i),
-        .mem_addr_o(mem_addr_o),
+        .mem_addr_o(mem_addr),
         .mem_data_o(mem_data_o),
-        .mem_we_o(mem_we_o),
-        .mem_ce_o(mem_ce_o),
-        .mem_sel_o(mem_sel_o)
+        .mem_we_o(mem_we),
+        .mem_ce_o(mem_ce),
+        .mem_sel_o(mem_sel)
     );
-    
-    // Instruction Memory (ROM)
-    reg [31:0] inst_mem[0:1023];
-    
+
     initial begin
-        $readmemh("inst_rom.data", inst_mem);
+        clk = 0;
+        forever #5 clk = ~clk;
     end
-    
-    assign inst = (inst_ce == `ReadEnable) ? inst_mem[inst_addr[11:2]] : `ZeroWord;
-    
-    // Data Memory (RAM)
-    reg [7:0] data_mem[0:4095]; // 4KB
-    
-    // Read Logic
-    // Assume 0x80000000 base. Map to 0.
-    wire [31:0] data_addr_masked = mem_addr_o & 32'h00000FFF;
-    
-    assign mem_data_i = (mem_ce_o == `ReadEnable) ? 
-                        {data_mem[data_addr_masked+3], data_mem[data_addr_masked+2], data_mem[data_addr_masked+1], data_mem[data_addr_masked]} : 
-                        `ZeroWord;
-                        
-    // Write Logic
-    always @(posedge clk) begin
-        if (mem_ce_o == `ReadEnable && mem_we_o == `WriteEnable) begin
-            if (mem_sel_o[0]) data_mem[data_addr_masked]   <= mem_data_o[7:0];
-            if (mem_sel_o[1]) data_mem[data_addr_masked+1] <= mem_data_o[15:8];
-            if (mem_sel_o[2]) data_mem[data_addr_masked+2] <= mem_data_o[23:16];
-            if (mem_sel_o[3]) data_mem[data_addr_masked+3] <= mem_data_o[31:24];
+
+    initial begin
+        rst = `RstEnable;
+        #20;
+        rst = `RstDisable;
+        #5000000; // Increased timeout
+        $display("Timeout!");
+        $finish;
+    end
+
+    initial begin
+        $readmemh("naive/sim/inst_rom.data", inst_mem);
+        // Initialize data memory to 0
+        for (integer i = 0; i < 1024; i = i + 1) begin
+            data_mem[i] = 0;
         end
     end
     
-    // Clock Generation
-    initial begin
-        clk = 0;
-        forever #10 clk = ~clk;
+    // Instruction Fetch Logic
+    always @(*) begin
+        if (inst_ce == `ReadEnable) begin
+            inst_i = inst_mem[inst_addr[11:2]]; 
+        end else begin
+            inst_i = `ZeroWord;
+        end
     end
     
-    // Reset and Run
-    initial begin
-        rst = `RstEnable;
-        #50;
-        rst = `RstDisable;
-        #1000;
-        $finish;
+    // Data Memory Logic
+    always @(posedge clk) begin
+        if (mem_ce == `ReadEnable && mem_we == `WriteEnable) begin
+            data_mem[mem_addr[11:2]] <= mem_data_o;
+        end
     end
     
-    // Dump Waveform
+    always @(*) begin
+        if (mem_ce == `ReadEnable && mem_we == `WriteDisable) begin
+            mem_data_i = data_mem[mem_addr[11:2]];
+        end else begin
+            mem_data_i = `ZeroWord;
+        end
+    end
+
     initial begin
         $dumpfile("naive_cpu.vcd");
         $dumpvars(0, testbench);
+    end
+
+    // Monitor
+    always @(posedge clk) begin
+        if (rst == `RstDisable) begin
+             $display("Time: %t, PC: %h, Inst: %h, x1: %d, x2: %d, x3: %d", $time, u_naive_cpu.pc, u_naive_cpu.u_id_stage.inst_i, u_naive_cpu.u_regfile.regs[1], u_naive_cpu.u_regfile.regs[2], u_naive_cpu.u_regfile.regs[3]);
+        end
+
+        if (u_naive_cpu.u_id_stage.inst_i == 32'h00000073) begin // ECALL
+            $display("ECALL encountered at time %t", $time);
+            $display("Result in x1: %d", u_naive_cpu.u_regfile.regs[1]);
+            $finish;
+        end
     end
 
 endmodule

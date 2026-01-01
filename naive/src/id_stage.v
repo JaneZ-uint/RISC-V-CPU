@@ -29,6 +29,7 @@ module id_stage(
     output reg [`InstAddrBus] pc_o,
     output reg [`DataBus] imm_o,
     output reg [`DataBus] reg2_data_o, // For Store (rs2)
+    output reg [`InstBus] inst_o,      // Pass instruction
     
     output reg stall_req
 );
@@ -52,6 +53,7 @@ module id_stage(
             imm = `ZeroWord;
             pc_o = `ZeroWord;
             stall_req = 1'b0;
+            inst_o = `ZeroWord;
         end else begin
             aluop_o = `ALU_OP_NOP;
             alusel_o = 3'b000;
@@ -64,6 +66,7 @@ module id_stage(
             imm = `ZeroWord;
             pc_o = pc_i;
             stall_req = 1'b0;
+            inst_o = inst_i;
 
             case (opcode)
                 `INST_OP_IMM: begin
