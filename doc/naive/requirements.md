@@ -1,0 +1,5 @@
+我希望你在naive目录下实现这个naive的五级流水CPU，具体要求见doc/naive/naive_cpu.md文件。 请你先阅读并理解doc/naive/naive_cpu.md文件中的设计要求和规范，然后再根据这些要求编写代码。阅读完毕后，请确认你已经理解了设计要求和规范，然后告诉我你准备好了。
+
+接下来请在naive目录下进行代码实现，naive/sim下需建一个testbench.v文件用于测试CPU的功能,src目录下是你的源代码实现文件。请确保你的代码符合doc/naive/naive_cpu.md文件中的所有要求和规范。
+
+那么就开始吧！
