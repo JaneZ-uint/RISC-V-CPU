@@ -2,8 +2,8 @@
 .global _start
 
 _start:
-    # Initialize stack pointer if necessary (not needed for this simple test)
-    # li sp, 0x1000 
+    # Initialize stack pointer to top of 256KB memory
+    li sp, 0x40000 
 
     # Call main function
     call main

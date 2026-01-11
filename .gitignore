@@ -1,4 +1,7 @@
 simulation.log
-naive_cpu.vvp                                                                   
+naive_cpu.vvp
 naive_cpu.vcd
-inst_rom.data
+test/*.bin
+test/*.elf
+test/Makefile
+naive/sim/inst_rom.data

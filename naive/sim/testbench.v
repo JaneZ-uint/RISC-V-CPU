@@ -6,14 +6,15 @@ module testbench;
     reg clk;
     reg rst;
     
-    // Instruction Memory
-    reg [`InstBus] inst_mem [0:1023];
+    // Unified Memory (64KB words = 256KB)
+    // This serves as both Instruction and Data memory (Von Neumann Architecture)
+    reg [`DataBus] ram [0:65535];
+    
+    // CPU Interface Signals
     wire [`InstAddrBus] inst_addr;
     wire inst_ce;
     reg [`InstBus] inst_i;
     
-    // Data Memory
-    reg [`DataBus] data_mem [0:1023];
     wire [`DataBus] mem_addr;
     wire [`DataBus] mem_data_o;
     wire mem_we;
@@ -46,38 +47,38 @@ module testbench;
         rst = `RstEnable;
         #20;
         rst = `RstDisable;
-        #5000000; // Increased timeout
+        #5000000;
         $display("Timeout!");
         $finish;
     end
 
     initial begin
-        $readmemh("naive/sim/inst_rom.data", inst_mem);
-        // Initialize data memory to 0
-        for (integer i = 0; i < 1024; i = i + 1) begin
-            data_mem[i] = 0;
-        end
+        // Initialize memory with program
+        $readmemh("naive/sim/inst_rom.data", ram);
     end
     
     // Instruction Fetch Logic
+    // Port 1 of Unified Memory
     always @(*) begin
         if (inst_ce == `ReadEnable) begin
-            inst_i = inst_mem[inst_addr[11:2]]; 
+            // Address mapping: Word aligned, max 256KB
+            inst_i = ram[inst_addr[17:2]]; 
         end else begin
             inst_i = `ZeroWord;
         end
     end
     
     // Data Memory Logic
+    // Port 2 of Unified Memory
     always @(posedge clk) begin
         if (mem_ce == `ReadEnable && mem_we == `WriteEnable) begin
-            data_mem[mem_addr[11:2]] <= mem_data_o;
+            ram[mem_addr[17:2]] <= mem_data_o;
         end
     end
     
     always @(*) begin
         if (mem_ce == `ReadEnable && mem_we == `WriteDisable) begin
-            mem_data_i = data_mem[mem_addr[11:2]];
+            mem_data_i = ram[mem_addr[17:2]];
         end else begin
             mem_data_i = `ZeroWord;
         end
