@@ -58,7 +58,7 @@ int expected[100] = {
 int C[100];
 
 int main() {
-    int n = 2;
+    int n = 100;
     
     // 向量逐元素乘法
     for (int i = 0; i < n; i++) {

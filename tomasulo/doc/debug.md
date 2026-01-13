@@ -84,3 +84,28 @@ Trace 显示: `Result in x1: 8`。
 ### 后续排查计划
 - 检查 `load_store_buffer.v` 对 RAW (Read After Write) 的处理。
 - 检查 Load 是否能从尚未 Commit 但已在 LSB 中的 Store 转发数据。
+
+## 2026-01-14: vector_add 修复
+
+### 问题描述
+`vector_add` 测试失败，预期 100，实际 8。
+通过 Log 分析，`x1` (Ra) 寄存器值为 8。这是 `start.S` 中 `main` 返回后 `mv x1, a0` 之前的地址/状态。
+实际上，测试台 (testbench) 因为检测到 Fetch Unit 对 `ecall` 的 **推测执行 (Speculative Fetch)** 而提前终止了仿真。
+由于 `call main` 是 JAL 指令，当前 Tomasulo 实现没有对 JAL 进行预测 (In-Order Issue 后才跳转)，导致 Fetch Unit 顺序取指取到了 `start.S` 结尾的 `ecall`。
+Testbench 检测到 `ecall` 取指后开启 1000 周期倒计时，而 `vector_add` 运行时间远超 1000 周期，导致仿真被强行杀死。
+
+### 解决方案
+1. **Load Store Buffer (LSB) 修复**: 修复了 `load_store_buffer.v` 中的竞争条件 (Race Condition) 和 `count` 计数逻辑，防止满/空状态错误 (虽然这不是导致 vector_add 8 的直接原因，但是潜在 bug)。
+2. **Testbench 调整**: 将 `inst_i == ecall` 的超时时间从 1000 周期增加到 200,000 周期，确保 `main` 函数有足够时间执行完毕。
+
+### 验证
+运行 `python3 final_test_tomasulo.py`，所有测试 (`sum`, `vector_add`, `vector_mul`) 均通过。
+
+## 2026-01-14: Update vector_mul test case
+User pointed out that vector_mul expected result should be 100 (verifying all elements) instead of 2.
+Current code limited the loop to n=2.
+Action:
+1. Modified test/src/vector_mul.c to set n=100.
+2. Updated final_test_tomasulo.py to expect 100.
+Result:
+All tests (sum, vector_add, vector_mul) PASS.

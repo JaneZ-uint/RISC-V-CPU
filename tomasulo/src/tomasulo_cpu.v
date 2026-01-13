@@ -260,7 +260,7 @@ module tomasulo_cpu(
     );
     assign alu_fu_ready = !alu_out_valid; 
     
-    load_store_buffer #(.SIZE(8)) u_lsb (
+    load_store_buffer #(.SIZE(16)) u_lsb (
         .clk(clk), .rst(rst), .flush(real_flush),
         .we(lsb_dispatch_we), .op(lsb_op), .sub_op(lsb_sub_op),
         .vj(lsb_vj), .qj(lsb_qj), .qj_valid(lsb_qj_valid),

@@ -78,6 +78,8 @@ module testbench;
             end
             
             if (mem_req_o && mem_we_o) begin
+                $display("MEM WRITE: Addr=%h Data=%h Mask=%b Time=%t", 
+                          {word_addr, 2'b00}, mem_data_o, mem_sel_o, $time);
                 if (mem_sel_o == 4'b1111) begin
                      ram[word_addr] <= mem_data_o;
                 end else begin
@@ -103,7 +105,7 @@ module testbench;
     
     always @(posedge clk) begin
         if (inst_i == 32'h00000073) begin
-             repeat(1000) @(posedge clk);
+             repeat(200000) @(posedge clk);
              $display("Result in x1: %d", u_cpu.u_regfile.regs[1]);
              $display("Result in a0 (x10): %d", u_cpu.u_regfile.regs[10]);
              $finish;

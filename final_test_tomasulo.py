@@ -7,7 +7,7 @@ import sys
 tests = [
     {"name": "sum", "expected": 5050},
     {"name": "vector_add", "expected": 100},
-    {"name": "vector_mul", "expected": 2}, # Based on current n=2 in C file
+    {"name": "vector_mul", "expected": 100}, # Based on current n=2 in C file
 ]
 
 def run_command(cmd):

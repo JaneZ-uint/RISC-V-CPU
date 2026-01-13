@@ -90,6 +90,10 @@ module load_store_buffer #(
 
     integer i;
 
+    wire push = we && !full;
+    wire pop = ((state == WAIT_MEM) && mem_ready && (op_buf[head] != `ALU_OP_LOAD)) ||
+               ((state == WAIT_CDB) && cdb_grant);
+
     always @(posedge clk) begin
         if (rst || flush) begin // Flush clears LSB? Usually LSB holds instructions until commit or squash.
                                 // If branch mispredict, we must flush speculative insts.
@@ -103,8 +107,12 @@ module load_store_buffer #(
             lsb_out_valid <= 0;
             mem_we <= 0;
         end else begin
+            // Count Update
+            if (push && !pop) count <= count + 1;
+            else if (!push && pop) count <= count - 1;
+
             // Dispatch
-            if (we && !full) begin
+            if (push) begin
                 op_buf[tail] <= op;
                 sub_op_buf[tail] <= sub_op;
                 dest_buf[tail] <= dest;
@@ -140,7 +148,6 @@ module load_store_buffer #(
                 
                 valid[tail] <= 1;
                 tail <= (tail + 1) % SIZE;
-                count <= count + 1;
             end
             
             // CDB Snoop (Update waiting operands)
@@ -237,7 +244,6 @@ module load_store_buffer #(
                             // Done
                             valid[head] <= 0;
                             head <= (head + 1) % SIZE;
-                            count <= count - 1;
                             state <= IDLE;
                         end
                     end
@@ -253,7 +259,6 @@ module load_store_buffer #(
                         lsb_out_valid <= 0; 
                         valid[head] <= 0;
                         head <= (head + 1) % SIZE;
-                        count <= count - 1;
                         state <= IDLE;
                     end
                 end
@@ -261,4 +266,10 @@ module load_store_buffer #(
         end
     end
 
+
+    always @(posedge clk) begin
+         if (we && full) $display("LSB DROP! Time=%t", $time);
+         // $display("LSB State: count=%d head=%d tail=%d full=%b push=%b pop=%b Time=%t", count, head, tail, full, push, pop, $time);
+    end
 endmodule
+
