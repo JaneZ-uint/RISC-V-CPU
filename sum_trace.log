@@ -1,4 +1,0 @@
-WARNING: tomasulo/sim/testbench.v:61: $readmemh(inst_rom.data): Not enough words in the file for the requested range [0:65535].
-VCD info: dumpfile tomasulo_cpu.vcd opened for output.
-Result in x1:       5050
-tomasulo/sim/testbench.v:135: $finish called at 1355000 (1ps)
