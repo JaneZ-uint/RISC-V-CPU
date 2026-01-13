@@ -9,7 +9,7 @@
 `define WriteDisable 1'b0
 `define ReadEnable 1'b1
 `define ReadDisable 1'b0
-`define AluOpBus 3:0
+`define AluOpBus 4:0    
 `define AluSelBus 2:0
 `define InstBus 31:0
 `define InstAddrBus 31:0
@@ -27,7 +27,7 @@
 `define INST_STORE   7'b0100011
 `define INST_OP_IMM  7'b0010011
 `define INST_OP      7'b0110011
-`define INST_ECALL   7'b1110011 // System
+`define INST_ECALL   7'b1110011 
 
 // Funct3 for Branch
 `define FUNCT3_BEQ   3'b000
@@ -59,19 +59,31 @@
 `define FUNCT3_OR      3'b110
 `define FUNCT3_AND     3'b111
 
-// ALU Ops
-`define ALU_OP_NOP  4'b0000
-`define ALU_OP_ADD  4'b0001
-`define ALU_OP_SUB  4'b0010
-`define ALU_OP_SLL  4'b0011
-`define ALU_OP_SLT  4'b0100
-`define ALU_OP_SLTU 4'b0101
-`define ALU_OP_XOR  4'b0110
-`define ALU_OP_SRL  4'b0111
-`define ALU_OP_SRA  4'b1000
-`define ALU_OP_OR   4'b1001
-`define ALU_OP_AND  4'b1010
-`define ALU_OP_LUI  4'b1011 // Pass Imm
-`define ALU_OP_JAL  4'b1100 // PC + 4
+// ALU Ops (5 bits)
+`define ALU_OP_NOP  5'b00000
+`define ALU_OP_ADD  5'b00001
+`define ALU_OP_SUB  5'b00010
+`define ALU_OP_SLL  5'b00011
+`define ALU_OP_SLT  5'b00100
+`define ALU_OP_SLTU 5'b00101
+`define ALU_OP_XOR  5'b00110
+`define ALU_OP_SRL  5'b00111
+`define ALU_OP_SRA  5'b01000
+`define ALU_OP_OR   5'b01001
+`define ALU_OP_AND  5'b01010
+`define ALU_OP_LUI  5'b01011 
+`define ALU_OP_JAL  5'b01100 
+
+// Branch Ops
+`define ALU_OP_BEQ  5'b10000
+`define ALU_OP_BNE  5'b10001
+`define ALU_OP_BLT  5'b10010
+`define ALU_OP_BGE  5'b10011
+`define ALU_OP_BLTU 5'b10100
+`define ALU_OP_BGEU 5'b10101
+
+// LS Ops
+`define ALU_OP_LOAD  5'b11000
+`define ALU_OP_STORE 5'b11001
 
 `endif
