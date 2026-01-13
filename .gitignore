@@ -12,3 +12,5 @@ tomasulo_cpu.vcd
 tomasulo/sim/testbench.vvp
 tomasulo/sim/vector_mul_debug_real.log
 tomasulo/sim/vector_mul_debug.log
+test/vector_add.dump
+tomasulo/sim/vector_add_debug.log

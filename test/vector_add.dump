@@ -1,0 +1,49 @@
+
+vector_add.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00040137          	lui	sp,0x40
+   4:	024000ef          	jal	28 <main>
+   8:	00050093          	mv	ra,a0
+   c:	00000013          	nop
+  10:	00000013          	nop
+  14:	00000013          	nop
+  18:	00000013          	nop
+  1c:	00000013          	nop
+  20:	00000073          	ecall
+
+00000024 <loop>:
+  24:	0000006f          	j	24 <loop>
+
+Disassembly of section .text.startup:
+
+00000028 <main>:
+  28:	09000593          	li	a1,144
+  2c:	19058513          	addi	a0,a1,400
+  30:	54000713          	li	a4,1344
+  34:	09000793          	li	a5,144
+  38:	00050893          	mv	a7,a0
+  3c:	54000613          	li	a2,1344
+  40:	0007a683          	lw	a3,0(a5)
+  44:	00052803          	lw	a6,0(a0)
+  48:	00478793          	addi	a5,a5,4
+  4c:	00450513          	addi	a0,a0,4
+  50:	010686b3          	add	a3,a3,a6
+  54:	00d62023          	sw	a3,0(a2)
+  58:	00460613          	addi	a2,a2,4
+  5c:	ff1792e3          	bne	a5,a7,40 <main+0x18>
+  60:	32058693          	addi	a3,a1,800
+  64:	00000513          	li	a0,0
+  68:	19070593          	addi	a1,a4,400
+  6c:	00072783          	lw	a5,0(a4)
+  70:	0006a603          	lw	a2,0(a3)
+  74:	00470713          	addi	a4,a4,4
+  78:	00468693          	addi	a3,a3,4
+  7c:	40c787b3          	sub	a5,a5,a2
+  80:	0017b793          	seqz	a5,a5
+  84:	00f50533          	add	a0,a0,a5
+  88:	feb712e3          	bne	a4,a1,6c <main+0x44>
+  8c:	00008067          	ret
