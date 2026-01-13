@@ -47,9 +47,9 @@ module reservation_station #(
     reg [`RegBus] vj [0:SIZE-1];
     reg [`RegBus] vk [0:SIZE-1];
     reg [`ROB_ID_WIDTH-1:0] qj [0:SIZE-1];
-    reg qj_valid [0:SIZE-1]; // 1 = waiting for qj
+    reg qj_valid [0:SIZE-1]; 
     reg [`ROB_ID_WIDTH-1:0] qk [0:SIZE-1];
-    reg qk_valid [0:SIZE-1]; // 1 = waiting for qk
+    reg qk_valid [0:SIZE-1]; 
     reg [`ROB_ID_WIDTH-1:0] dest [0:SIZE-1];
     reg [`RegBus] imm [0:SIZE-1];
     reg [`InstAddrBus] pc [0:SIZE-1];
@@ -62,7 +62,6 @@ module reservation_station #(
     integer i;
 
     // 1. Find Free Entry ( Combinational )
-    // Simple Priority Encoder
     reg [31:0] free_idx;
     reg found_free;
     always @(*) begin
@@ -77,14 +76,11 @@ module reservation_station #(
     end
 
     // 2. Find Ready Entry ( Combinational )
-    // Select one entry where busy=1, qj_valid=0, qk_valid=0
     reg [31:0] ready_idx;
     reg found_ready;
     always @(*) begin
         found_ready = 0;
         ready_idx = 0;
-        // Simple fixed priority loop (Oldest first behavior depends on allocation strategy, 
-        // usually circular buffer is better for age, but index order is approximation)
         for (i = 0; i < SIZE; i = i + 1) begin
             if (busy[i] && !qj_valid[i] && !qk_valid[i] && !found_ready) begin
                 ready_idx = i;
@@ -107,7 +103,7 @@ module reservation_station #(
         end else begin
             
             // --- Issue / Execution Logic ---
-            if (fu_ready && found_ready) begin
+            if (fu_ready && !ex_valid && found_ready) begin
                 // Issue to FU
                 ex_valid <= 1'b1;
                 ex_op <= op[ready_idx];
@@ -120,27 +116,16 @@ module reservation_station #(
                 
                 // Clear the entry
                 busy[ready_idx] <= 1'b0;
-                
-                // busy_count update logic needs care if we also Dispatch same cycle
+                $display("RS: Issued op=%h rob_id=%d to FU", op[ready_idx], dest[ready_idx]);
             end else begin
                 ex_valid <= 1'b0;
             end
 
             // --- Dispatch Logic ---
             if (dispatch_we && found_free && !full) begin
-                // If we issue and dispatch same cycle, handle different indices appropriately.
-                // Since free_idx searches !busy, and ready_idx searches busy, they are disjoint.
-                // However, does busy get cleared immediately? No, non-blocking default.
-                // BUT we are setting busy[ready_idx] <= 0 above.
-                // If free_idx picked the same one being cleared (unlikely as it was busy at start of cycle), 
-                // we should be careful. 
-                // In standard combinational `free_idx` logic above, it sees `busy` from Register Q output. 
-                // So it won't pick the one executing this cycle. It picks a "currently free" one.
-                
                 busy[free_idx] <= 1'b1;
                 op[free_idx] <= dispatch_op;
                 
-                // Handle Operand Snooping during Dispatch (Corner Case: CDB broadcasting exact tag we need NOW)
                 // Qj
                 if (dispatch_qj_valid) begin
                    if (cdb_valid && cdb_rob_id == dispatch_qj) begin
@@ -149,7 +134,6 @@ module reservation_station #(
                    end else begin
                         qj[free_idx] <= dispatch_qj;
                         qj_valid[free_idx] <= 1'b1;
-                        // dispatch_vj might be invalid/garbage if qj_valid is 1, but we don't use it.
                    end
                 end else begin
                     vj[free_idx] <= dispatch_vj;
@@ -180,19 +164,6 @@ module reservation_station #(
             if (cdb_valid) begin
                 for (i = 0; i < SIZE; i = i + 1) begin
                     if (busy[i]) begin
-                        // Don't update the one currently dispatching (handled above)
-                        // If free_idx == i and dispatch_we == 1, we effectively overwrite it above.
-                        // So only update if not being written to?
-                        // Actually, Verilog non-blocking assignments order matters if same variable.
-                        // Block order: Sequential logic block.
-                        // Dispatch writes to [free_idx]. Snoop writes to [i].
-                        // If i == free_idx, Dispatch (later in code?) should win?
-                        // Wait, I put Dispatch block above.
-                        // If I put Snoop block here, and i == free_idx:
-                        // Snoop writes busy[i], Dispatch writes busy[free_idx].
-                        // Last assignment wins.
-                        // So I should ensure Snoop doesn't touch the newly dispatched entry.
-                        
                         if (!(dispatch_we && found_free && (i == free_idx))) begin
                              if (qj_valid[i] && qj[i] == cdb_rob_id) begin
                                  vj[i] <= cdb_value;
@@ -208,17 +179,11 @@ module reservation_station #(
             end
             
             // --- Update Busy Count ---
-            // Simpler to just recount or use up/down counter.
-            // Up/Down logic:
-            // +1 if Dispatch
-            // -1 if Execute
-            // Net result
             if (dispatch_we && found_free && !full) begin
-                if (!(fu_ready && found_ready)) begin
+                if (!(fu_ready && !ex_valid && found_ready)) begin
                     busy_count <= busy_count + 1;
                 end
-                // else +1 -1 = 0 change
-            end else if (fu_ready && found_ready) begin
+            end else if (fu_ready && !ex_valid && found_ready) begin
                 busy_count <= busy_count - 1;
             end
             

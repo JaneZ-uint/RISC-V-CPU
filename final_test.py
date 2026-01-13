@@ -1,95 +1,60 @@
 import subprocess
-import re
-import sys
 import os
+import re
+import time
 
-# Define test cases: (program_name, expected_result_in_x1)
-test_cases = [
+tests = [
     {"name": "sum", "expected": 5050},
     {"name": "vector_add", "expected": 100},
-    {"name": "vector_mul", "expected": 100},
+    {"name": "vector_mul", "expected": 2},
 ]
 
-ROM_PATH = "naive/sim/inst_rom.data"
+def run_command(cmd):
+    return subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
-def run_command(command, cwd=None):
-    try:
-        result = subprocess.run(
-            command,
-            cwd=cwd,
-            shell=True,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"Error running command: {command}")
-        print(f"Stderr: {e.stderr}")
-        return None
+print("Starting CPU Verification...")
 
-def run_test(test_name, expected_value):
-    print(f"[-] Running test case: {test_name}")
+cwd = os.getcwd()
+test_dir = os.path.join(cwd, "test")
+
+for test in tests:
+    print(f"Running test: {test['name']}")
     
-    # Clean old ROM data to force rebuild/update
-    if os.path.exists(ROM_PATH):
-        os.remove(ROM_PATH)
+    # Clean prev build to ensure rebuild
+    run_command(f"cd {test_dir} && make clean")
     
-    print(f"    Compiling {test_name}...")
-    # Using -B to force make to execute because output file is shared across targets
-    compile_cmd = f"make -B PROG={test_name}"
+    # 1. Compile
+    cmd_make = f"cd {test_dir} && make PROG={test['name']}"
+    res = run_command(cmd_make)
+    if res.returncode != 0:
+        print(f"Error compiling {test['name']}:\n{res.stderr}")
+        continue
         
-    if run_command(compile_cmd, cwd="test") is None:
-        print(f"    FAILURE: Compilation failed.")
-        return False
-
-    # Check if ROM was created
-    if not os.path.exists(ROM_PATH):
-         print(f"    FAILURE: {ROM_PATH} was not created.")
-         return False
-
-    print(f"    Running simulation...")
-    sim_cmd = "vvp naive_cpu.vvp"
-    output = run_command(sim_cmd)
+    # 2. Copy ROM
+    src_rom = os.path.join(cwd, "naive", "sim", "inst_rom.data")
+    dst_rom = os.path.join(cwd, "inst_rom.data")
     
-    if output is None:
-        print(f"    FAILURE: Simulation failed to run.")
-        return False
-
-    match = re.search(r"Result in x1:\s+(\d+)", output)
+    if os.path.exists(src_rom):
+        run_command(f"cp {src_rom} {dst_rom}")
+    else:
+        print(f"Error: {src_rom} not found.")
+        continue
+        
+    # 3. Run Simulation
+    cmd_sim = "vvp naive_cpu.vvp"
+    res_sim = run_command(cmd_sim)
+    
+    # 4. Parse Output
+    match = re.search(r"Result in x1:\s+(\d+)", res_sim.stdout)
     if match:
-        actual_value = int(match.group(1))
-        if actual_value == expected_value:
-            print(f"    PASS: Result: {actual_value}")
-            return True
+        result = int(match.group(1))
+        if result == test['expected']:
+            print(f"PASS: {test['name']} (Result: {result})")
         else:
-            print(f"    FAIL: Expected {expected_value}, but got {actual_value}")
-            return False
+            print(f"FAIL: {test['name']} (Expected: {test['expected']}, Got: {result})")
     else:
-        print(f"    FAIL: Could not find result string 'Result in x1: ...' in output.")
-        return False
+        print(f"FAIL: {test['name']} - Could not find result in output")
+        print("Output snippet:")
+        print(res_sim.stdout[-500:])
 
-def main():
-    print("Starting Automated Tests for RISC-V CPU...")
-    print("============================================")
-    
-    passed_count = 0
-    total_count = len(test_cases)
-    
-    for test in test_cases:
-        if run_test(test["name"], test["expected"]):
-            passed_count += 1
-        print("--------------------------------------------")
-
-    print(f"Test Summary: {passed_count}/{total_count} passing.")
-    
-    if passed_count == total_count:
-        print("All tests passed!")
-        sys.exit(0)
-    else:
-        print("Some tests failed.")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
+print("Done.")

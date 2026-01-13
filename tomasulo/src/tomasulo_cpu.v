@@ -239,8 +239,8 @@ module tomasulo_cpu(
         .dispatch_we(rs_alu_we), .dispatch_op(rs_alu_op),
         .dispatch_vj(rs_alu_vj), .dispatch_qj(rs_alu_qj), .dispatch_qj_valid(rs_alu_qj_valid),
         .dispatch_vk(rs_alu_vk), .dispatch_qk(rs_alu_qk), .dispatch_qk_valid(rs_alu_qk_valid),
-        .dispatch_dest(rs_alu_dest), .dispatch_imm(rs_alu_imm), .dispatch_pc(rs_alu_pc), .dispatch_pred_target(r
-s_alu_pred_target),
+        .dispatch_dest(rs_alu_dest), .dispatch_imm(rs_alu_imm), .dispatch_pc(rs_alu_pc),
+        .dispatch_pred_target(rs_alu_pred_target),
         .full(rs_alu_full),
         // Execution Output
         .fu_ready(alu_fu_ready), .ex_valid(ex_alu_valid), .ex_op(ex_alu_op),
@@ -262,15 +262,16 @@ s_alu_pred_target),
     
     load_store_buffer #(.SIZE(8)) u_lsb (
         .clk(clk), .rst(rst), .flush(real_flush),
-        .lsb_we(lsb_dispatch_we), .lsb_op(lsb_op), .lsb_sub_op(lsb_sub_op),
-        .lsb_vj(lsb_vj), .lsb_qj(lsb_qj), .lsb_qj_valid(lsb_qj_valid),
-        .lsb_vk(lsb_vk), .lsb_qk(lsb_qk), .lsb_qk_valid(lsb_qk_valid),
-        .lsb_dest(lsb_dest), .lsb_imm(lsb_imm), .lsb_pc(lsb_pc),
+        .we(lsb_dispatch_we), .op(lsb_op), .sub_op(lsb_sub_op),
+        .vj(lsb_vj), .qj(lsb_qj), .qj_valid(lsb_qj_valid),
+        .vk(lsb_vk), .qk(lsb_qk), .qk_valid(lsb_qk_valid),
+        .dest(lsb_dest), .imm(lsb_imm), .pc(lsb_pc),
         .full(lsb_full),
         .cdb_valid(cdb_valid), .cdb_rob_id(cdb_rob_id), .cdb_value(cdb_value),
-        .arb_allow(lsb_grant), .arb_req(lsb_arb_req), .arb_dest(lsb_arb_dest), .arb_val(lsb_arb_val),
+        .cdb_grant(lsb_grant), 
+        .lsb_out_valid(lsb_arb_req), .lsb_out_rob_id(lsb_arb_dest), .lsb_out_value(lsb_arb_val),
         .mem_req(mem_req_o), .mem_we(mem_we_o), .mem_addr(mem_addr_o), .mem_wdata(mem_data_o),
-        .mem_mask(mem_sel_o), .mem_ready(mem_ready_i), .mem_rdata(mem_data_i), .mem_rvalid(mem_valid_i)
+        .mem_mask(mem_sel_o), .mem_ready(mem_ready_i), .mem_data(mem_data_i)
     );
     
     cdb_arbiter u_cdb_arbiter(

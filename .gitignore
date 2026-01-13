@@ -5,3 +5,10 @@ test/*.bin
 test/*.elf
 test/Makefile
 naive/sim/inst_rom.data
+inst_rom.data
+sum_trace.log
+vector_mul_trace.log
+tomasulo_cpu.vcd
+tomasulo/sim/testbench.vvp
+tomasulo/sim/vector_mul_debug_real.log
+tomasulo/sim/vector_mul_debug.log

@@ -10,7 +10,7 @@ module issue_unit(
     input wire iq_empty,
     input wire [`InstBus] iq_inst,
     input wire [`InstAddrBus] iq_pc,
-    output wire iq_re,             
+    output reg iq_re,             
 
     // ROB Alloc
     input wire rob_full,
@@ -71,7 +71,7 @@ module issue_unit(
     input wire lsb_full,
     output reg lsb_we,
     output reg [`AluOpBus] lsb_op,
-    output reg [2:0] lsb_sub_op, // New Port for Funct3
+    output reg [2:0] lsb_sub_op, 
     output reg [`RegBus] lsb_vj,
     output reg [`ROB_ID_WIDTH-1:0] lsb_qj,
     output reg lsb_qj_valid,
@@ -174,7 +174,7 @@ module issue_unit(
         rs_alu_vk = 0; rs_alu_qk = 0; rs_alu_qk_valid = 0; rs_alu_dest = rob_alloc_id; 
         rs_alu_imm = imm; rs_alu_pc = iq_pc; rs_alu_pred_target = 0;
         
-        lsb_we = 0; lsb_op = alu_op; lsb_sub_op = funct3; // Set sub-op
+        lsb_we = 0; lsb_op = alu_op; lsb_sub_op = funct3; 
         lsb_vj = 0; lsb_qj = 0; lsb_qj_valid = 0;
         lsb_vk = 0; lsb_qk = 0; lsb_qk_valid = 0; lsb_dest = rob_alloc_id;
         lsb_imm = imm; lsb_pc = iq_pc;
@@ -194,10 +194,9 @@ module issue_unit(
             end
             
             // Operands
-            wire uses_rs1 = (is_alu && opcode != `INST_LUI && opcode != `INST_AUIPC && opcode != `INST_JAL) ||
-                            is_branch || is_jalr || is_load || is_store;
-            
-            if (uses_rs1) begin
+            if ((is_alu && opcode != `INST_LUI && opcode != `INST_AUIPC && opcode != `INST_JAL) ||
+                is_branch || is_jalr || is_load || is_store) begin
+                
                 if (rat_rs1_valid) begin 
                     if (rob_query1_ready) begin
                        rs_alu_vj = rob_query1_value; rs_alu_qj_valid = 0;
@@ -215,9 +214,7 @@ module issue_unit(
                  rs_alu_vj = iq_pc; rs_alu_qj_valid = 0;
             end
             
-            wire uses_rs2 = (opcode == `INST_OP) || is_branch || is_store;
-            
-            if (uses_rs2) begin
+            if ((opcode == `INST_OP) || is_branch || is_store) begin
                 if (rat_rs2_valid) begin
                     if (rob_query2_ready) begin
                        rs_alu_vk = rob_query2_value; rs_alu_qk_valid = 0;
@@ -242,4 +239,12 @@ module issue_unit(
             end
         end
     end
+
+    // TRACING
+    always @(posedge clk) begin
+        if (iq_re) begin
+            $display("Time: %t | ISSUE: PC=%h | Op=%h | DestROB=%d | RD=%d", $time, iq_pc, alu_op, rob_alloc_id, rob_alloc_rd);
+        end
+    end
+
 endmodule
