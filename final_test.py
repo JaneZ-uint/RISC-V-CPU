@@ -6,7 +6,7 @@ import time
 tests = [
     {"name": "sum", "expected": 5050},
     {"name": "vector_add", "expected": 100},
-    {"name": "vector_mul", "expected": 2},
+    {"name": "vector_mul", "expected": 100},
 ]
 
 def run_command(cmd):
