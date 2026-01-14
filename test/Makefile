@@ -2,7 +2,10 @@ TOOLCHAIN_PREFIX = riscv64-unknown-elf-
 CC = $(TOOLCHAIN_PREFIX)gcc
 OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 
-CFLAGS = -march=rv32i -mabi=ilp32 -O2 -nostdlib
+# Basic flags
+CFLAGS = -march=rv32i -mabi=ilp32 -O2 -nostdlib 
+# Library path
+LIBGCC_PATH = /usr/lib/gcc/riscv64-unknown-elf/13.2.0/rv32i/ilp32
 
 PROG ?= vector_mul
 
@@ -17,7 +20,7 @@ all: ../naive/sim/inst_rom.data
 	$(OBJCOPY) -O binary $< $@
 
 %.elf: start.S src/%.c link.ld
-	$(CC) $(CFLAGS) -T link.ld start.S src/$*.c -o $@
+	$(CC) $(CFLAGS) -T link.ld start.S src/$*.c -o $@ -L$(LIBGCC_PATH) -lgcc
 
 clean:
 	rm -f *.elf *.bin ../naive/sim/inst_rom.data

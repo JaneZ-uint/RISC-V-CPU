@@ -54,7 +54,11 @@ module reorder_buffer(
     output reg bp_update_valid,
     output reg [`InstAddrBus] bp_update_pc,
     output reg bp_update_taken,
-    output reg [`InstAddrBus] bp_update_target
+    output reg [`InstAddrBus] bp_update_target,
+
+    // Statistics Outputs
+    output reg [31:0] cnt_total_branch,
+    output reg [31:0] cnt_correct_branch
 );
 
     // ROB Entry Structure
@@ -121,7 +125,24 @@ module reorder_buffer(
     integer i;
     
     always @(posedge clk) begin
-        if (rst == `RstEnable || flush == 1'b1) begin
+        if (rst == `RstEnable) begin  // Removed flush reset for counters to persist through flushes!
+                                      // Actually if we flush, we don't want to reset stats for the whole run.
+                                      // Stats should accumulate.
+            head <= 0;
+            tail <= 0;
+            count <= 0;
+            cnt_total_branch <= 0;
+            cnt_correct_branch <= 0;
+            for (i=0; i<`ROB_SIZE; i=i+1) begin
+                busy[i] <= 0;
+                ready[i] <= 0;
+                pred[i] <= 0;
+                op[i] <= 0;
+                // value, addr, pc etc don't need reset
+            end
+        end else if (flush == 1'b1) begin
+            // Standard Flush Logic
+            $display("ROB: FLUSH TRIGGERED at Time=%t. Head=%d, Op=%h", $time, head, op[head]);
             head <= 0;
             tail <= 0;
             count <= 0;
@@ -130,8 +151,19 @@ module reorder_buffer(
                 ready[i] <= 0;
                 pred[i] <= 0;
                 op[i] <= 0;
-                // value, addr, pc etc don't need reset
             end
+            
+            // Handle Misprediction Statistics
+            // Since we flushed, the instruction at head caused it.
+            // Check if it's one of our conditional branches.
+            if (op[head] == `ALU_OP_BEQ || op[head] == `ALU_OP_BNE || 
+                op[head] == `ALU_OP_BLT || op[head] == `ALU_OP_BGE || 
+                op[head] == `ALU_OP_BLTU || op[head] == `ALU_OP_BGEU) begin
+                
+                $display("ROB: Counting Flush as Misprediction. PC=%h TotalBranch=%d", pc[head], cnt_total_branch + 1);
+                cnt_total_branch <= cnt_total_branch + 1;
+            end
+            // Do NOT reset counters on flush!
         end else begin
             // 1. Allocation (Issue)
             if (alloc_req && !full) begin
@@ -156,6 +188,26 @@ module reorder_buffer(
                 if (!(alloc_req && !full)) begin
                      count <= count - 1'b1;
                 end
+                
+                // --- STATISTICS UPDATE ---
+                if (op[head] == `ALU_OP_BEQ || op[head] == `ALU_OP_BNE || 
+                    op[head] == `ALU_OP_BLT || op[head] == `ALU_OP_BGE || 
+                    op[head] == `ALU_OP_BLTU || op[head] == `ALU_OP_BGEU) begin
+                    
+                    cnt_total_branch <= cnt_total_branch + 1;
+                    
+                    if (pred[head] == outcome[head]) begin
+                        if (outcome[head] == 0) begin
+                            // Correct Not Taken
+                            cnt_correct_branch <= cnt_correct_branch + 1;
+                        end else begin
+                            // Taken. Check Target.
+                            if (pred_target[head] == addr[head]) begin
+                                cnt_correct_branch <= cnt_correct_branch + 1;
+                            end
+                        end
+                    end
+                end
             end
             
             // 3. Write Back (CDB)
@@ -170,4 +222,13 @@ module reorder_buffer(
         end
     end
 
+
+    // DEBUG PRINT
+    always @(posedge clk) begin
+        if (commit_ack && !empty && ready[head]) begin
+            if (op[head] >= 5'b10000 && op[head] <= 5'b10101) begin // Branch Ops
+                 $display("COMMIT: PC=%h | Op=%h | Pred=%b | Outcome=%b | Flush=%b", pc[head], op[head], pred[head], outcome[head], flush);
+            end
+        end
+    end
 endmodule

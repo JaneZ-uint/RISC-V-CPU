@@ -78,16 +78,27 @@ module testbench;
             end
             
             if (mem_req_o && mem_we_o) begin
-                $display("MEM WRITE: Addr=%h Data=%h Mask=%b Time=%t", 
-                          {word_addr, 2'b00}, mem_data_o, mem_sel_o, $time);
-                if (mem_sel_o == 4'b1111) begin
-                     ram[word_addr] <= mem_data_o;
-                end else begin
-                    if(mem_sel_o[0]) ram[word_addr][7:0]   <= mem_data_o[7:0];
-                    if(mem_sel_o[1]) ram[word_addr][15:8]  <= mem_data_o[15:8];
-                    if(mem_sel_o[2]) ram[word_addr][23:16] <= mem_data_o[23:16];
-                    if(mem_sel_o[3]) ram[word_addr][31:24] <= mem_data_o[31:24];
+                // Check exit condition (Write to 0x30004 implies ends)
+                // Using exact address matching for byte/word writes. 
+                // Since 0x30004 is word-aligned, we check the masked address.
+                if ({word_addr, 2'b00} == 32'h00030004) begin
+                    $display("HIT GOOD TRAP (Memory Write)");
+                    $display("TOTAL_BRANCH: %d", u_cpu.u_rob.cnt_total_branch);
+                    $display("CORRECT_BRANCH: %d", u_cpu.u_rob.cnt_correct_branch);
+                    $finish;
                 end
+
+                 ram[word_addr] <= mem_data_o;
+                 // Note: Ignoring byte masks for simplicity in this trap check, 
+                 // but for real writes we should respect mem_sel_o like before
+                 if (mem_sel_o == 4'b1111) begin
+                      ram[word_addr] <= mem_data_o;
+                 end else begin
+                     if(mem_sel_o[0]) ram[word_addr][7:0]   <= mem_data_o[7:0];
+                     if(mem_sel_o[1]) ram[word_addr][15:8]  <= mem_data_o[15:8];
+                     if(mem_sel_o[2]) ram[word_addr][23:16] <= mem_data_o[23:16];
+                     if(mem_sel_o[3]) ram[word_addr][31:24] <= mem_data_o[31:24];
+                 end
             end
         end
     end
@@ -98,49 +109,27 @@ module testbench;
         #100;
         rst = `RstDisable;
         
-        #50000000;
+        // Timeout
+        #500000000;
         $display("TIMEOUT");
+        $display("TOTAL_BRANCH: %d", u_cpu.u_rob.cnt_total_branch);
+        $display("CORRECT_BRANCH: %d", u_cpu.u_rob.cnt_correct_branch);
         $finish;
     end
     
     always @(posedge clk) begin
         if (inst_i == 32'h00000073) begin
-             repeat(200000) @(posedge clk);
-             $display("Result in x1: %d", u_cpu.u_regfile.regs[1]);
-             $display("Result in a0 (x10): %d", u_cpu.u_regfile.regs[10]);
+             repeat(20) @(posedge clk); 
+             $display("HIT GOOD TRAP (ECALL)");
+             $display("TOTAL_BRANCH: %d", u_cpu.u_rob.cnt_total_branch);
+             $display("CORRECT_BRANCH: %d", u_cpu.u_rob.cnt_correct_branch);
              $finish;
-        end
-    end
-    
-    // TRACING
-    always @(posedge clk) begin
-        if (u_cpu.u_rob.commit_valid) begin
-             $display("Time: %t | Commit PC: %h | Op: %h | Rd: %d | Val: %h", 
-                      $time, u_cpu.u_rob.commit_pc_o, u_cpu.u_rob.commit_op_o, u_cpu.u_rob.commit_rd_o, u_cpu.u_rob.commit_value_o);
         end
     end
 
     initial begin
         $dumpfile("tomasulo_cpu.vcd");
         $dumpvars(0, testbench);
-    end
-
-
-    // ROB DEBUG
-    always @(posedge clk) begin
-         if (u_cpu.u_rob.head == 4 || u_cpu.u_rob.head == 3) begin
-             $display("Time: %t | ROB Head: %d | Ready: %b | CommitValid: %b | CDB_Valid: %b | CDB_ID: %d", 
-                   $time, u_cpu.u_rob.head, u_cpu.u_rob.ready[u_cpu.u_rob.head], u_cpu.u_rob.commit_valid, 
-                   u_cpu.cdb_valid, u_cpu.cdb_rob_id);
-         end
-    end
-
-
-    // NEW: Monitor CDB for Out-of-Order Execution proof
-    always @(posedge clk) begin
-        if (u_cpu.cdb_valid) begin
-             $display("CDB Broadcast: Time=%0t | ROB_ID=%0d", $time, u_cpu.cdb_rob_id);
-        end
     end
 
 endmodule
