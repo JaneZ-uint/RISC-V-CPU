@@ -135,4 +135,12 @@ module testbench;
          end
     end
 
+
+    // NEW: Monitor CDB for Out-of-Order Execution proof
+    always @(posedge clk) begin
+        if (u_cpu.cdb_valid) begin
+             $display("CDB Broadcast: Time=%0t | ROB_ID=%0d", $time, u_cpu.cdb_rob_id);
+        end
+    end
+
 endmodule
