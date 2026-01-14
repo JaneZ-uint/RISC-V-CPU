@@ -4,3 +4,4 @@ tomasulo_cpu.vcd
 inst_rom.data
 tomasulo/sim/testbench.vvp
 tomasulo/sim/tomasulo_cpu.vcd
+tomasulo/sim/inst_rom.data  
