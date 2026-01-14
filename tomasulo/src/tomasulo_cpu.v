@@ -157,7 +157,7 @@ module tomasulo_cpu(
                     (commit_outcome != commit_pred)); 
     
     wire is_jal_retiring = (commit_valid && (commit_op == `ALU_OP_JAL));
-    assign flush_addr = commit_addr; 
+    assign flush_addr = commit_outcome ? commit_addr : (commit_pc + 32'h4); 
     wire real_flush = flush || is_jal_retiring; 
 
     // Note: For naive implementation, we might not flush on JAL if we predicted taken.
