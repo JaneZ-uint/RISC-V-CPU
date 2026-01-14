@@ -10,6 +10,8 @@ module issue_unit(
     input wire iq_empty,
     input wire [`InstBus] iq_inst,
     input wire [`InstAddrBus] iq_pc,
+    input wire iq_pred_taken,           // New Input
+    input wire [`InstAddrBus] iq_pred_target, // New Input
     output reg iq_re,             
 
     // ROB Alloc
@@ -164,7 +166,10 @@ module issue_unit(
     
     always @(*) begin
         iq_re = 0;
-        rob_alloc_req = 0; rob_alloc_op = alu_op; rob_alloc_rd = rd; rob_alloc_pc = iq_pc; rob_alloc_pred = 0; rob_alloc_pred_target = 0;
+        rob_alloc_req = 0; rob_alloc_op = alu_op; rob_alloc_rd = rd; rob_alloc_pc = iq_pc; 
+        rob_alloc_pred = iq_pred_taken;             // Pass prediction
+        rob_alloc_pred_target = iq_pred_target;     // Pass prediction
+        
         rat_we = 0; rat_rd = rd; rat_rob_id = rob_alloc_id;
         rat_rs1 = rs1; rat_rs2 = rs2;
         rf_re1 = 0; rf_raddr1 = rs1; rf_re2 = 0; rf_raddr2 = rs2;
@@ -172,7 +177,8 @@ module issue_unit(
         
         rs_alu_we = 0; rs_alu_op = alu_op; rs_alu_vj = 0; rs_alu_qj = 0; rs_alu_qj_valid = 0;
         rs_alu_vk = 0; rs_alu_qk = 0; rs_alu_qk_valid = 0; rs_alu_dest = rob_alloc_id; 
-        rs_alu_imm = imm; rs_alu_pc = iq_pc; rs_alu_pred_target = 0;
+        rs_alu_imm = imm; rs_alu_pc = iq_pc; 
+        rs_alu_pred_target = iq_pred_target; // Pass prediction target to RS 
         
         lsb_we = 0; lsb_op = alu_op; lsb_sub_op = funct3; 
         lsb_vj = 0; lsb_qj = 0; lsb_qj_valid = 0;

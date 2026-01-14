@@ -37,7 +37,15 @@ module tomasulo_cpu(
     wire [`InstAddrBus] issue_pc;
     wire issue_re;   
     wire iq_empty;
-    wire iq_full;    
+    wire iq_full;
+    wire issue_pred_taken;
+    wire [`InstAddrBus] issue_pred_target;
+    
+    // --- ROB <-> Fetch Unit (For Update) ---
+    wire bp_update_valid;
+    wire [`InstAddrBus] bp_update_pc;
+    wire bp_update_taken;
+    wire [`InstAddrBus] bp_update_target;
     
     // --- Issue Unit <-> ROB ---
     wire rob_full;
@@ -152,28 +160,84 @@ module tomasulo_cpu(
     assign flush_addr = commit_addr; 
     wire real_flush = flush || is_jal_retiring; 
 
-    wire reg_commit_we = (commit_valid && (commit_rd != 0) && (commit_op != `ALU_OP_STORE) && (commit_op != `ALU_OP_BEQ) && (commit_op != `ALU_OP_BNE) && (commit_op != `ALU_OP_BLT) && (commit_op != `ALU_OP_BGE) && (commit_op != `ALU_OP_BLTU) && (commit_op != `ALU_OP_BGEU)); 
+    // Note: For naive implementation, we might not flush on JAL if we predicted taken.
+    // But since our fetch unit might just increment PC by 4 unless we have this predictor,
+    // JAL will always cause a flush in base implementation.
+    // WITH PREDICTION: If we predicted JAL taken correctly, we shouldn't flush.
+    // But JAL always jumps.
+    // If our predictor predicted taken to correct target:
+    // fetch_unit would have jumped.
+    // If not, we flush.
+    // For now, let's keep simple flush logic: if prediction was wrong (taken vs not taken), we flush.
+    // But JAL is always taken. So if we didn't predict taken (and correct target), we need to flush.
+    // However, our current flush logic only checks (commit_outcome != commit_pred).
+    // For JAL, outcome is always Taken. If pred was Not Taken, we flush. Correct.
+    
+    // Warning: We also need to check if Target was correct!
+    // If Taken predicted but wrong target -> Flush.
+    // Current simple flush logic might miss target mismatch.
+    // Let's refine flush logic:
+    
+    wire branch_mispred = (commit_valid && 
+                    (commit_op == `ALU_OP_BEQ || commit_op == `ALU_OP_BNE || 
+                     commit_op == `ALU_OP_BLT || commit_op == `ALU_OP_BGE || 
+                     commit_op == `ALU_OP_BLTU || commit_op == `ALU_OP_BGEU) && 
+                    (commit_outcome != commit_pred));
+                    
+    // For JAL/JALR or Taken Branches, if target doesn't match, we must flush too.
+    // Ideally we check:
+    wire target_mismatch = (commit_valid && commit_outcome && (commit_addr != commit_pred_target));
+    
+    // Since we are adding logic, let's update real_flush.
+    // Note: JAL/JALR are unconditional jumps. Outcome is Taken.
+    
+    wire control_flow_instruction = (commit_op == `ALU_OP_BEQ || commit_op == `ALU_OP_BNE || 
+                     commit_op == `ALU_OP_BLT || commit_op == `ALU_OP_BGE || 
+                     commit_op == `ALU_OP_BLTU || commit_op == `ALU_OP_BGEU ||
+                     commit_op == `ALU_OP_JAL); // JALR (not supported in naive prediction fully yet maybe? treating as JAL in opcode enum usually separate)
+
+    // Wait, ALU_OP_JAL handles both JAL and JALR in this simple CPU? 
+    // In issue_unit: JAL -> ALU_OP_JAL, JALR -> ALU_OP_JAL. Yes.
+    
+    wire needs_flush = commit_valid && (
+        (control_flow_instruction && (commit_outcome != commit_pred)) ||
+        (control_flow_instruction && commit_outcome && (commit_addr != commit_pred_target))
+    );
+    
+    // Redefine flush for modules
+    assign real_flush = needs_flush;
+
+    wire reg_commit_we = (commit_valid && (commit_rd != 0) && (commit_op != `ALU_OP_STORE) && (commit_op != `ALU_OP_BEQ) && (commit_op != `ALU_OP_BNE) && (commit_op != `ALU_OP_BLT) && (commit_op != `ALU_OP_BGE) && (commit_op != `ALU_OP_BLTU) && (commit_op != `ALU_OP_BGEU));                                                      
     
     // --- MODULES ---
     
     fetch_unit u_fetch_unit(
         .clk(clk), .rst(rst), .flush(real_flush), .flush_addr(flush_addr),
         .inst_addr_o(inst_addr_o), .inst_ce_o(inst_ce_o), .inst_i(inst_i),
-        .issue_re(issue_re), .issue_inst_o(issue_inst), .issue_pc_o(issue_pc),
-        .issue_empty(iq_empty), .issue_full(iq_full)
+        .issue_re(issue_re), 
+        .issue_inst_o(issue_inst), .issue_pc_o(issue_pc),
+        .issue_pred_taken_o(issue_pred_taken), .issue_pred_target_o(issue_pred_target),
+        .issue_empty(iq_empty), .issue_full(iq_full),
+        
+        .bp_update_valid_i(bp_update_valid),
+        .bp_update_pc_i(bp_update_pc),
+        .bp_update_taken_i(bp_update_taken),
+        .bp_update_target_i(bp_update_target)
     );
     
     issue_unit u_issue_unit(
         .clk(clk), .rst(rst), .flush(real_flush),
-        .iq_empty(iq_empty), .iq_inst(issue_inst), .iq_pc(issue_pc), .iq_re(issue_re),
+        .iq_empty(iq_empty), .iq_inst(issue_inst), .iq_pc(issue_pc), 
+        .iq_pred_taken(issue_pred_taken), .iq_pred_target(issue_pred_target),
+        .iq_re(issue_re),
         // ROB Alloc
         .rob_full(rob_full), .rob_alloc_req(rob_alloc_req), .rob_alloc_op(rob_alloc_op),
         .rob_alloc_rd(rob_alloc_rd), .rob_alloc_pc(rob_alloc_pc),
         .rob_alloc_pred(rob_alloc_pred), .rob_alloc_pred_target(rob_alloc_pred_target),
         .rob_alloc_id(rob_alloc_id),
         // ROB Query
-        .rob_query1_id(rob_query1_id), .rob_query1_ready(rob_query1_ready), .rob_query1_value(rob_query1_value),
-        .rob_query2_id(rob_query2_id), .rob_query2_ready(rob_query2_ready), .rob_query2_value(rob_query2_value),
+        .rob_query1_id(rob_query1_id), .rob_query1_ready(rob_query1_ready), .rob_query1_value(rob_query1_value),                                                                                                                
+        .rob_query2_id(rob_query2_id), .rob_query2_ready(rob_query2_ready), .rob_query2_value(rob_query2_value),                                                                                                                
         // RAT
         .rat_we(rat_we), .rat_rd(rat_rd), .rat_rob_id(rat_rob_id),
         .rat_rs1(rat_rs1), .rat_rs2(rat_rs2),
@@ -213,7 +277,13 @@ module tomasulo_cpu(
         .commit_rd_o(commit_rd), .commit_value_o(commit_value), .commit_pc_o(commit_pc),
         .commit_addr_o(commit_addr), .commit_pred_o(commit_pred), .commit_outcome_o(commit_outcome),
         .commit_pred_target_o(commit_pred_target),
-        .commit_ack(commit_valid) 
+        .commit_ack(commit_valid),
+        
+        // Branch Update
+        .bp_update_valid(bp_update_valid),
+        .bp_update_pc(bp_update_pc),
+        .bp_update_taken(bp_update_taken),
+        .bp_update_target(bp_update_target)
     );
     
     rat u_rat(

@@ -48,7 +48,13 @@ module reorder_buffer(
     output wire [`InstAddrBus] commit_pred_target_o,
     
     // Commit Action
-    input wire commit_ack                   // Retire head
+    input wire commit_ack,                   // Retire head
+
+    // Branch Predictor Update (Passed to Fetch Unit)
+    output reg bp_update_valid,
+    output reg [`InstAddrBus] bp_update_pc,
+    output reg bp_update_taken,
+    output reg [`InstAddrBus] bp_update_target
 );
 
     // ROB Entry Structure
@@ -91,6 +97,27 @@ module reorder_buffer(
     assign commit_outcome_o = outcome[head];
     assign commit_pred_target_o = pred_target[head];
     
+    // Branch Update Logic
+    always @(*) begin
+        bp_update_valid = 0;
+        bp_update_pc = 0;
+        bp_update_taken = 0;
+        bp_update_target = 0;
+        
+        if (commit_ack && !empty && ready[head]) begin
+            // Check if it's a branch instruction
+            if (op[head] == `ALU_OP_BEQ || op[head] == `ALU_OP_BNE || 
+                op[head] == `ALU_OP_BLT || op[head] == `ALU_OP_BGE || 
+                op[head] == `ALU_OP_BLTU || op[head] == `ALU_OP_BGEU) begin
+                
+                bp_update_valid = 1;
+                bp_update_pc = pc[head];
+                bp_update_taken = outcome[head];
+                bp_update_target = addr[head]; 
+            end
+        end
+    end
+
     integer i;
     
     always @(posedge clk) begin
@@ -132,9 +159,6 @@ module reorder_buffer(
             end
             
             // 3. Write Back (CDB)
-            // Note: If Allocating happens same cycle, Tail entry is NOT touched by CDB usually 
-            // (Instruction cannot alloc and finish in same cycle).
-            // But checking busy ensures we don't write to unallocated slots.
             if (cdb_valid) begin
                 if (busy[cdb_rob_id]) begin
                     ready[cdb_rob_id] <= 1'b1;
