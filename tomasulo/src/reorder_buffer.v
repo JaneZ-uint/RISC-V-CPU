@@ -142,7 +142,6 @@ module reorder_buffer(
             end
         end else if (flush == 1'b1) begin
             // Standard Flush Logic
-            $display("ROB: FLUSH TRIGGERED at Time=%t. Head=%d, Op=%h", $time, head, op[head]);
             head <= 0;
             tail <= 0;
             count <= 0;
@@ -160,7 +159,6 @@ module reorder_buffer(
                 op[head] == `ALU_OP_BLT || op[head] == `ALU_OP_BGE || 
                 op[head] == `ALU_OP_BLTU || op[head] == `ALU_OP_BGEU) begin
                 
-                $display("ROB: Counting Flush as Misprediction. PC=%h TotalBranch=%d", pc[head], cnt_total_branch + 1);
                 cnt_total_branch <= cnt_total_branch + 1;
             end
             // Do NOT reset counters on flush!
@@ -227,7 +225,6 @@ module reorder_buffer(
     always @(posedge clk) begin
         if (commit_ack && !empty && ready[head]) begin
             if (op[head] >= 5'b10000 && op[head] <= 5'b10101) begin // Branch Ops
-                 $display("COMMIT: PC=%h | Op=%h | Pred=%b | Outcome=%b | Flush=%b", pc[head], op[head], pred[head], outcome[head], flush);
             end
         end
     end

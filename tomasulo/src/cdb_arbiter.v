@@ -13,6 +13,7 @@ module cdb_arbiter(
     input wire alu_branch_outcome,
     output reg alu_grant,
     
+    
     // LSB Interface (Placeholder)
     input wire lsb_valid,
     input wire [`ROB_ID_WIDTH-1:0] lsb_rob_id,
@@ -27,8 +28,7 @@ module cdb_arbiter(
     output reg cdb_branch_outcome
 );
 
-    // Simple Fixed Priority Arbiter (ALU > LSB for now, or LSB > ALU?)
-    // Memory usually slower, so maybe prioritize LSB completion?
+    // Simple Fixed Priority Arbiter (LSB > MDU > ALU)
     
     always @(*) begin
         alu_grant = 0;
@@ -44,11 +44,7 @@ module cdb_arbiter(
             cdb_valid = 1;
             cdb_rob_id = lsb_rob_id;
             cdb_value = lsb_value;
-            cdb_addr = 0; // Loads don't produce target addr usually (or addr is used for Store??)
-            // LSB spec: LSB does address calculation. 
-            // If Load: Value is memory data.
-            // If Store: Value is irrelevant? No, Store happens at Commit.
-            // LSB completion signals "Address Ready" or "Load Value Ready".
+            cdb_addr = 0; 
         end else if (alu_valid) begin
             alu_grant = 1;
             cdb_valid = 1;

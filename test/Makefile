@@ -3,7 +3,7 @@ CC = $(TOOLCHAIN_PREFIX)gcc
 OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 
 # Basic flags
-CFLAGS = -march=rv32i -mabi=ilp32 -O2 -nostdlib 
+CFLAGS = -march=rv32i -mabi=ilp32 -O0 -nostdlib 
 # Library path
 LIBGCC_PATH = /usr/lib/gcc/riscv64-unknown-elf/13.2.0/rv32i/ilp32
 

@@ -78,19 +78,13 @@ module testbench;
             end
             
             if (mem_req_o && mem_we_o) begin
-                // Check exit condition (Write to 0x30004 implies ends)
-                // Using exact address matching for byte/word writes. 
-                // Since 0x30004 is word-aligned, we check the masked address.
+                // Check exit condition for array_test benchmarks (Write to 0x30004)
                 if ({word_addr, 2'b00} == 32'h00030004) begin
-                    $display("HIT GOOD TRAP (Memory Write)");
                     $display("TOTAL_BRANCH: %d", u_cpu.u_rob.cnt_total_branch);
                     $display("CORRECT_BRANCH: %d", u_cpu.u_rob.cnt_correct_branch);
                     $finish;
                 end
 
-                 ram[word_addr] <= mem_data_o;
-                 // Note: Ignoring byte masks for simplicity in this trap check, 
-                 // but for real writes we should respect mem_sel_o like before
                  if (mem_sel_o == 4'b1111) begin
                       ram[word_addr] <= mem_data_o;
                  end else begin
@@ -111,16 +105,22 @@ module testbench;
         
         // Timeout
         #500000000;
-        $display("TIMEOUT");
-        $display("TOTAL_BRANCH: %d", u_cpu.u_rob.cnt_total_branch);
-        $display("CORRECT_BRANCH: %d", u_cpu.u_rob.cnt_correct_branch);
+        $display("TIMEOUT"); // Keep for safety
         $finish;
     end
     
+    // Check for ECALL at Issue stage with Empty ROB to ensure completion
     always @(posedge clk) begin
-        if (inst_i == 32'h00000073) begin
-             repeat(20) @(posedge clk); 
-             $display("HIT GOOD TRAP (ECALL)");
+         if (!u_cpu.u_issue_unit.iq_empty && 
+             u_cpu.u_issue_unit.iq_inst[6:0] == 7'b1110011 && // ECALL
+             u_cpu.u_rob.empty) begin
+             
+             // Wait one cycle to ensure stability if needed
+             @(posedge clk);
+             
+             $display("Result in x1: %d", u_cpu.u_regfile.regs[1]);
+             
+             // Keep stats for benchmark script
              $display("TOTAL_BRANCH: %d", u_cpu.u_rob.cnt_total_branch);
              $display("CORRECT_BRANCH: %d", u_cpu.u_rob.cnt_correct_branch);
              $finish;
