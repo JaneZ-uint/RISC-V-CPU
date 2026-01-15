@@ -8,6 +8,7 @@ tests = [
     {"name": "sum", "expected": 5050},
     {"name": "vector_add", "expected": 100},
     {"name": "vector_mul", "expected": 100}, # Based on current n=2 in C file
+    {"name": "m_extension_test", "expected": 4660},
 ]
 
 def run_command(cmd):
@@ -38,7 +39,11 @@ for test in tests:
     # Clean first
     run_command(f"cd {test_dir} && make clean")
     
-    cmd_make = f"cd {test_dir} && make PROG={test['name']}"
+    extra_args = ""
+    if test['name'] == "m_extension_test":
+        extra_args = 'CFLAGS="-march=rv32im -mabi=ilp32 -O2 -nostdlib"'
+    
+    cmd_make = f"cd {test_dir} && make PROG={test['name']} {extra_args}"
     res = run_command(cmd_make)
     if res.returncode != 0:
         print(f"Error compiling {test['name']}:\n{res.stderr}")

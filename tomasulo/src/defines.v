@@ -59,6 +59,19 @@
 `define FUNCT3_OR      3'b110
 `define FUNCT3_AND     3'b111
 
+// Funct7 M-Extension
+`define FUNCT7_M       7'b0000001
+
+// Funct3 M-Extension
+`define FUNCT3_MUL     3'b000
+`define FUNCT3_MULH    3'b001
+`define FUNCT3_MULHSU  3'b010
+`define FUNCT3_MULHU   3'b011
+`define FUNCT3_DIV     3'b100
+`define FUNCT3_DIVU    3'b101
+`define FUNCT3_REM     3'b110
+`define FUNCT3_REMU    3'b111
+
 // ALU Ops (5 bits)
 `define ALU_OP_NOP  5'b00000
 `define ALU_OP_ADD  5'b00001
@@ -85,5 +98,15 @@
 // LS Ops
 `define ALU_OP_LOAD  5'b11000
 `define ALU_OP_STORE 5'b11001
+
+// MDU Ops
+`define ALU_OP_MUL    5'b11010
+`define ALU_OP_MULH   5'b11011
+`define ALU_OP_MULHSU 5'b11100
+`define ALU_OP_MULHU  5'b11101
+`define ALU_OP_DIV    5'b11110
+`define ALU_OP_DIVU   5'b11111
+`define ALU_OP_REM    5'b01101  // Filling gaps
+`define ALU_OP_REMU   5'b01110
 
 `endif

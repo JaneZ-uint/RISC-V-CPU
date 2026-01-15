@@ -12,6 +12,12 @@ module cdb_arbiter(
     input wire [`InstAddrBus] alu_addr,
     input wire alu_branch_outcome,
     output reg alu_grant,
+
+    // MDU Interface
+    input wire mdu_valid,
+    input wire [`ROB_ID_WIDTH-1:0] mdu_rob_id,
+    input wire [`RegBus] mdu_value,
+    output reg mdu_grant,
     
     
     // LSB Interface (Placeholder)
@@ -33,6 +39,8 @@ module cdb_arbiter(
     always @(*) begin
         alu_grant = 0;
         lsb_grant = 0;
+        mdu_grant = 0;
+
         cdb_valid = 0;
         cdb_rob_id = 0;
         cdb_value = 0;
@@ -45,6 +53,12 @@ module cdb_arbiter(
             cdb_rob_id = lsb_rob_id;
             cdb_value = lsb_value;
             cdb_addr = 0; 
+        end else if (mdu_valid) begin
+            mdu_grant = 1;
+            cdb_valid = 1;
+            cdb_rob_id = mdu_rob_id;
+            cdb_value = mdu_value;
+            cdb_addr = 0;
         end else if (alu_valid) begin
             alu_grant = 1;
             cdb_valid = 1;
@@ -54,5 +68,4 @@ module cdb_arbiter(
             cdb_branch_outcome = alu_branch_outcome;
         end
     end
-
 endmodule

@@ -98,6 +98,21 @@ module tomasulo_cpu(
     wire [`InstAddrBus] rs_alu_pc;
     wire [`InstAddrBus] rs_alu_pred_target;
 
+    // --- Issue Unit <-> RS MDU ---
+    wire rs_mdu_full;
+    wire rs_mdu_we;
+    wire [`AluOpBus] rs_mdu_op;
+    wire [`RegBus] rs_mdu_vj;
+    wire [`ROB_ID_WIDTH-1:0] rs_mdu_qj;
+    wire rs_mdu_qj_valid;
+    wire [`RegBus] rs_mdu_vk;
+    wire [`ROB_ID_WIDTH-1:0] rs_mdu_qk;
+    wire rs_mdu_qk_valid;
+    wire [`ROB_ID_WIDTH-1:0] rs_mdu_dest;
+    wire [`RegBus] rs_mdu_imm;
+    wire [`InstAddrBus] rs_mdu_pc;
+    wire [`InstAddrBus] rs_mdu_pred_target;
+
     // --- Issue Unit <-> LSB ---
     wire lsb_full;
     wire lsb_dispatch_we;
@@ -130,6 +145,22 @@ module tomasulo_cpu(
     wire [`InstAddrBus] alu_out_target;
     wire alu_out_outcome;
     wire alu_grant;
+
+    // --- MDU Execution Signals ---
+    wire mdu_fu_ready;
+    wire ex_mdu_valid;
+    wire [`AluOpBus] ex_mdu_op;
+    wire [`RegBus] ex_mdu_vj;
+    wire [`RegBus] ex_mdu_vk;
+    wire [`RegBus] ex_mdu_imm;
+    wire [`InstAddrBus] ex_mdu_pc;
+    wire [`ROB_ID_WIDTH-1:0] ex_mdu_dest;
+    wire [`InstAddrBus] ex_mdu_pred_target; 
+    
+    wire mdu_out_done;
+    wire [`ROB_ID_WIDTH-1:0] mdu_out_rob_id;
+    wire [`RegBus] mdu_out_value;
+    wire mdu_grant;
     
     // --- LSB Signals ---
     wire lsb_arb_req;
@@ -153,61 +184,35 @@ module tomasulo_cpu(
     assign flush = (commit_valid && 
                     (commit_op == `ALU_OP_BEQ || commit_op == `ALU_OP_BNE || 
                      commit_op == `ALU_OP_BLT || commit_op == `ALU_OP_BGE || 
-                     commit_op == `ALU_OP_BLTU || commit_op == `ALU_OP_BGEU) && 
+                     commit_op == `ALU_OP_BLTU || commit_op == `ALU_OP_BGEU) &&
                     (commit_outcome != commit_pred)); 
     
     wire is_jal_retiring = (commit_valid && (commit_op == `ALU_OP_JAL));
-    assign flush_addr = commit_outcome ? commit_addr : (commit_pc + 32'h4); 
-    wire real_flush = flush || is_jal_retiring; 
-
-    // Note: For naive implementation, we might not flush on JAL if we predicted taken.
-    // But since our fetch unit might just increment PC by 4 unless we have this predictor,
-    // JAL will always cause a flush in base implementation.
-    // WITH PREDICTION: If we predicted JAL taken correctly, we shouldn't flush.
-    // But JAL always jumps.
-    // If our predictor predicted taken to correct target:
-    // fetch_unit would have jumped.
-    // If not, we flush.
-    // For now, let's keep simple flush logic: if prediction was wrong (taken vs not taken), we flush.
-    // But JAL is always taken. So if we didn't predict taken (and correct target), we need to flush.
-    // However, our current flush logic only checks (commit_outcome != commit_pred).
-    // For JAL, outcome is always Taken. If pred was Not Taken, we flush. Correct.
-    
-    // Warning: We also need to check if Target was correct!
-    // If Taken predicted but wrong target -> Flush.
-    // Current simple flush logic might miss target mismatch.
-    // Let's refine flush logic:
     
     wire branch_mispred = (commit_valid && 
                     (commit_op == `ALU_OP_BEQ || commit_op == `ALU_OP_BNE || 
                      commit_op == `ALU_OP_BLT || commit_op == `ALU_OP_BGE || 
-                     commit_op == `ALU_OP_BLTU || commit_op == `ALU_OP_BGEU) && 
+                     commit_op == `ALU_OP_BLTU || commit_op == `ALU_OP_BGEU) &&
                     (commit_outcome != commit_pred));
                     
-    // For JAL/JALR or Taken Branches, if target doesn't match, we must flush too.
-    // Ideally we check:
     wire target_mismatch = (commit_valid && commit_outcome && (commit_addr != commit_pred_target));
     
-    // Since we are adding logic, let's update real_flush.
-    // Note: JAL/JALR are unconditional jumps. Outcome is Taken.
-    
     wire control_flow_instruction = (commit_op == `ALU_OP_BEQ || commit_op == `ALU_OP_BNE || 
-                     commit_op == `ALU_OP_BLT || commit_op == `ALU_OP_BGE || 
-                     commit_op == `ALU_OP_BLTU || commit_op == `ALU_OP_BGEU ||
-                     commit_op == `ALU_OP_JAL); // JALR (not supported in naive prediction fully yet maybe? treating as JAL in opcode enum usually separate)
-
-    // Wait, ALU_OP_JAL handles both JAL and JALR in this simple CPU? 
-    // In issue_unit: JAL -> ALU_OP_JAL, JALR -> ALU_OP_JAL. Yes.
+                                     commit_op == `ALU_OP_BLT || commit_op == `ALU_OP_BGE || 
+                                     commit_op == `ALU_OP_BLTU || commit_op == `ALU_OP_BGEU || 
+                                     commit_op == `ALU_OP_JAL); 
     
     wire needs_flush = commit_valid && (
         (control_flow_instruction && (commit_outcome != commit_pred)) ||
         (control_flow_instruction && commit_outcome && (commit_addr != commit_pred_target))
     );
     
-    // Redefine flush for modules
     assign real_flush = needs_flush;
+    
+    assign flush_addr = (commit_outcome) ? commit_addr : (commit_pc + 32'd4);
 
-    wire reg_commit_we = (commit_valid && (commit_rd != 0) && (commit_op != `ALU_OP_STORE) && (commit_op != `ALU_OP_BEQ) && (commit_op != `ALU_OP_BNE) && (commit_op != `ALU_OP_BLT) && (commit_op != `ALU_OP_BGE) && (commit_op != `ALU_OP_BLTU) && (commit_op != `ALU_OP_BGEU));                                                      
+
+    wire reg_commit_we = (commit_valid && (commit_rd != 0) && (commit_op != `ALU_OP_STORE) && (commit_op != `ALU_OP_BEQ) && (commit_op != `ALU_OP_BNE) && (commit_op != `ALU_OP_BLT) && (commit_op != `ALU_OP_BGE) && (commit_op != `ALU_OP_BLTU) && (commit_op != `ALU_OP_BGEU)); 
     
     // --- MODULES ---
     
@@ -231,13 +236,13 @@ module tomasulo_cpu(
         .iq_pred_taken(issue_pred_taken), .iq_pred_target(issue_pred_target),
         .iq_re(issue_re),
         // ROB Alloc
-        .rob_full(rob_full), .rob_alloc_req(rob_alloc_req), .rob_alloc_op(rob_alloc_op),
+        .rob_full(rob_full), .rob_alloc_req(rob_alloc_req), .rob_alloc_op(rob_alloc_op), 
         .rob_alloc_rd(rob_alloc_rd), .rob_alloc_pc(rob_alloc_pc),
         .rob_alloc_pred(rob_alloc_pred), .rob_alloc_pred_target(rob_alloc_pred_target),
         .rob_alloc_id(rob_alloc_id),
         // ROB Query
-        .rob_query1_id(rob_query1_id), .rob_query1_ready(rob_query1_ready), .rob_query1_value(rob_query1_value),                                                                                                                
-        .rob_query2_id(rob_query2_id), .rob_query2_ready(rob_query2_ready), .rob_query2_value(rob_query2_value),                                                                                                                
+        .rob_query1_id(rob_query1_id), .rob_query1_ready(rob_query1_ready), .rob_query1_value(rob_query1_value),
+        .rob_query2_id(rob_query2_id), .rob_query2_ready(rob_query2_ready), .rob_query2_value(rob_query2_value),
         // RAT
         .rat_we(rat_we), .rat_rd(rat_rd), .rat_rob_id(rat_rob_id),
         .rat_rs1(rat_rs1), .rat_rs2(rat_rs2),
@@ -252,6 +257,12 @@ module tomasulo_cpu(
         .rs_alu_vk(rs_alu_vk), .rs_alu_qk(rs_alu_qk), .rs_alu_qk_valid(rs_alu_qk_valid),
         .rs_alu_dest(rs_alu_dest), .rs_alu_imm(rs_alu_imm), .rs_alu_pc(rs_alu_pc),
         .rs_alu_pred_target(rs_alu_pred_target),
+        // RS MDU (New)
+        .rs_mdu_full(rs_mdu_full), .rs_mdu_we(rs_mdu_we), .rs_mdu_op(rs_mdu_op),
+        .rs_mdu_vj(rs_mdu_vj), .rs_mdu_qj(rs_mdu_qj), .rs_mdu_qj_valid(rs_mdu_qj_valid),
+        .rs_mdu_vk(rs_mdu_vk), .rs_mdu_qk(rs_mdu_qk), .rs_mdu_qk_valid(rs_mdu_qk_valid),
+        .rs_mdu_dest(rs_mdu_dest), .rs_mdu_imm(rs_mdu_imm), .rs_mdu_pc(rs_mdu_pc),
+        .rs_mdu_pred_target(rs_mdu_pred_target),
         // LSB
         .lsb_full(lsb_full), .lsb_we(lsb_dispatch_we), .lsb_op(lsb_op), .lsb_sub_op(lsb_sub_op),
         .lsb_vj(lsb_vj), .lsb_qj(lsb_qj), .lsb_qj_valid(lsb_qj_valid),
@@ -324,11 +335,40 @@ module tomasulo_cpu(
         .clk(clk), .rst(rst),
         .valid_i(ex_alu_valid), .op_i(ex_alu_op), .vj_i(ex_alu_vj), .vk_i(ex_alu_vk),
         .imm_i(ex_alu_imm), .pc_i(ex_alu_pc), .dest_i(ex_alu_dest), .pred_target_i(ex_alu_pred_target),
-        .valid_o(alu_out_valid), .rob_id_o(alu_out_rob_id), .value_o(alu_out_value), 
+        .valid_o(alu_out_valid), .rob_id_o(alu_out_rob_id), .value_o(alu_out_value),
         .target_addr_o(alu_out_target), .branch_outcome_o(alu_out_outcome),
         .cdb_grant_i(alu_grant)
     );
     assign alu_fu_ready = !alu_out_valid; 
+
+    // --- MDU SECTION ---
+    reservation_station #(.SIZE(4)) u_rs_mdu (
+        .clk(clk), .rst(rst), .flush(real_flush),
+        // Dispatch
+        .dispatch_we(rs_mdu_we), .dispatch_op(rs_mdu_op),
+        .dispatch_vj(rs_mdu_vj), .dispatch_qj(rs_mdu_qj), .dispatch_qj_valid(rs_mdu_qj_valid),
+        .dispatch_vk(rs_mdu_vk), .dispatch_qk(rs_mdu_qk), .dispatch_qk_valid(rs_mdu_qk_valid),
+        .dispatch_dest(rs_mdu_dest), .dispatch_imm(rs_mdu_imm), .dispatch_pc(rs_mdu_pc),
+        .dispatch_pred_target(rs_mdu_pred_target),
+        .full(rs_mdu_full),
+        // Execution Output
+        .fu_ready(mdu_fu_ready), .ex_valid(ex_mdu_valid), .ex_op(ex_mdu_op),
+        .ex_vj(ex_mdu_vj), .ex_vk(ex_mdu_vk), .ex_imm(ex_mdu_imm), .ex_pc(ex_mdu_pc),
+        .ex_dest(ex_mdu_dest), .ex_pred_target(ex_mdu_pred_target),
+        // CDB Snoop
+        .cdb_valid(cdb_valid), .cdb_rob_id(cdb_rob_id), .cdb_value(cdb_value)
+    );
+
+    mdu_top u_mdu (
+        .clk(clk), .rst(rst), .flush(real_flush),
+        .start_i(ex_mdu_valid), .op_i(ex_mdu_op),
+        .rs1_i(ex_mdu_vj), .rs2_i(ex_mdu_vk), 
+        .rob_id_i(ex_mdu_dest),
+        .ready_o(mdu_fu_ready),
+        .done_o(mdu_out_done), .result_o(mdu_out_value), .rob_id_o(mdu_out_rob_id),
+        .cdb_grant_i(mdu_grant)
+    );
+
     
     load_store_buffer #(.SIZE(16)) u_lsb (
         .clk(clk), .rst(rst), .flush(real_flush),
@@ -349,8 +389,13 @@ module tomasulo_cpu(
         .alu_valid(alu_out_valid), .alu_rob_id(alu_out_rob_id), .alu_value(alu_out_value),
         .alu_addr(alu_out_target), .alu_branch_outcome(alu_out_outcome),
         .alu_grant(alu_grant),
+        
+        .mdu_valid(mdu_out_done), .mdu_rob_id(mdu_out_rob_id), .mdu_value(mdu_out_value),
+        .mdu_grant(mdu_grant),
+
         .lsb_valid(lsb_arb_req), .lsb_rob_id(lsb_arb_dest), .lsb_value(lsb_arb_val),
         .lsb_grant(lsb_grant),
+        
         .cdb_valid(cdb_valid), .cdb_rob_id(cdb_rob_id), .cdb_value(cdb_value),
         .cdb_addr(cdb_addr), .cdb_branch_outcome(cdb_branch_outcome)
     );

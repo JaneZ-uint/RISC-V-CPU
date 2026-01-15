@@ -30,3 +30,8 @@ help:
 	@echo "  make PROG=fib       - Compile fib.c and generate inst_rom.data"
 	@echo "  make PROG=vector_mul - Compile vector_mul.c (default)"
 	@echo "  make clean          - Remove generated files"
+
+# Simulation Target for Tomasulo M-Ext
+sim:
+	iverilog -o ../tomasulo/sim/out.vvp -I ../tomasulo/src ../tomasulo/sim/testbench.v ../tomasulo/src/*.v
+	vvp ../tomasulo/sim/out.vvp
