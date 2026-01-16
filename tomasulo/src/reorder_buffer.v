@@ -221,10 +221,18 @@ module reorder_buffer(
     end
 
 
+    
     // DEBUG PRINT
     always @(posedge clk) begin
-        if (commit_ack && !empty && ready[head]) begin
-            if (op[head] >= 5'b10000 && op[head] <= 5'b10101) begin // Branch Ops
+        if (rst != 1'b1 && flush != 1'b1) begin
+            if (alloc_req && !full) begin
+                 $display("[ISSUE ] Time: %0t, ROB_ID: %0d, PC: %h, OP: %d", $time, tail, alloc_pc, alloc_op);
+            end
+            if (cdb_valid) begin
+                 $display("[COMPL ] Time: %0t, ROB_ID: %0d, Val: %h", $time, cdb_rob_id, cdb_value);
+            end
+            if (commit_ack && !empty && ready[head]) begin
+                 $display("[COMMIT] Time: %0t, ROB_ID: %0d, PC: %h, OP: %d", $time, head, pc[head], op[head]);
             end
         end
     end

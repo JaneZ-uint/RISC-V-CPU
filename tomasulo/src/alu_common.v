@@ -76,16 +76,6 @@ module alu_common(
             branch_outcome_o <= 0;
         end else begin
             if (valid_i) begin
-                // We have a result. Try to send it.
-                // If cdb_grant_i is low, we might need to buffer it?
-                // For this simple design, we assume CDB arbitration happens combinatorially or next cycle grant.
-                // Ideally, 'valid_o' is a request.
-                // If we request and get granted, we clear valid_o?
-                // Or valid_o is the strobe "I am broadcasting now".
-                // Let's assume 'cdb_grant_i' means "You are selected to drive CDB next/this cycle".
-                
-                // Simplified: ALU is Pipelined? No, Single Cycle.
-                // We simply latch the result to output.
                 valid_o <= 1;
                 rob_id_o <= dest_i;
                 value_o <= result;
