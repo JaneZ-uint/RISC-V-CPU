@@ -1,6 +1,3 @@
-iverilog -o ../tomasulo/sim/out.vvp -I ../tomasulo/src ../tomasulo/sim/testbench.v ../tomasulo/src/*.v
-vvp ../tomasulo/sim/out.vvp
-WARNING: ../tomasulo/sim/testbench.v:60: $readmemh(inst_rom.data): Not enough words in the file for the requested range [0:65535].
 VCD info: dumpfile tomasulo_cpu.vcd opened for output.
 [ISSUE ] Time: 125000, ROB_ID: 0, PC: 00000000, OP: 11
 Time:               125000 | ISSUE: PC=00000000 | Op=0b | DestROB= 0 | RD= 2
@@ -14,7 +11,7 @@ Time:               155000 | ISSUE: PC=0000000c | Op=01 | DestROB= 3 | RD= 0
 [COMPL ] Time: 155000, ROB_ID: 0, Val: 00040000
 RS: Issued op=01 rob_id= 2 to FU
 [ISSUE ] Time: 165000, ROB_ID: 4, PC: 00000010, OP:  1
-[COMMIT] Time: 165000, ROB_ID: 0, PC: 00000000, OP: 11
+[COMMIT] Time: 165000, ROB_ID: 0, PC: 00000000, OP: 11, RD:  2, Val: 00040000
 Time:               165000 | ISSUE: PC=00000010 | Op=01 | DestROB= 4 | RD= 0
 Time:               175000 | ISSUE: PC=00000014 | Op=01 | DestROB= 5 | RD= 0
 [ISSUE ] Time: 175000, ROB_ID: 5, PC: 00000014, OP:  1
@@ -39,186 +36,204 @@ Time:               295000 | ISSUE: PC=00000030 | Op=01 | DestROB= 2 | RD= 8
 Time:               305000 | ISSUE: PC=00000034 | Op=01 | DestROB= 3 | RD=15
 Time:               315000 | ISSUE: PC=00000038 | Op=19 | DestROB= 4 | RD=12
 [ISSUE ] Time: 315000, ROB_ID: 4, PC: 00000038, OP: 25
-[COMMIT] Time: 315000, ROB_ID: 0, PC: 00000028, OP:  1
+[COMMIT] Time: 315000, ROB_ID: 0, PC: 00000028, OP:  1, RD:  2, Val: 0003ffe0
 RS: Issued op=01 rob_id= 2 to FU
 [ISSUE ] Time: 325000, ROB_ID: 5, PC: 0000003c, OP:  1
 Time:               325000 | ISSUE: PC=0000003c | Op=01 | DestROB= 5 | RD=15
 Time:               335000 | ISSUE: PC=00000040 | Op=19 | DestROB= 6 | RD= 8
 [ISSUE ] Time: 335000, ROB_ID: 6, PC: 00000040, OP: 25
-[COMPL ] Time: 335000, ROB_ID: 1, Val: 00000000
+[COMPL ] Time: 335000, ROB_ID: 2, Val: 00040000
+[LSB] STORE COMPL: Time=335000, Addr=0003fffc, Data=00000000, Mask=1111
+RS: Issued op=01 rob_id= 5 to FU
 [ISSUE ] Time: 345000, ROB_ID: 7, PC: 00000044, OP: 25
-[COMPL ] Time: 345000, ROB_ID: 2, Val: 00040000
-[COMMIT] Time: 345000, ROB_ID: 1, PC: 0000002c, OP: 25
+[COMPL ] Time: 345000, ROB_ID: 1, Val: 00000000
 Time:               345000 | ISSUE: PC=00000044 | Op=19 | DestROB= 7 | RD= 4
 Time:               355000 | ISSUE: PC=00000048 | Op=01 | DestROB= 8 | RD=15
 [ISSUE ] Time: 355000, ROB_ID: 8, PC: 00000048, OP:  1
-[COMMIT] Time: 355000, ROB_ID: 2, PC: 00000030, OP:  1
-RS: Issued op=01 rob_id= 5 to FU
+[COMMIT] Time: 355000, ROB_ID: 1, PC: 0000002c, OP: 25, RD: 28, Val: 00000000
 [ISSUE ] Time: 365000, ROB_ID: 9, PC: 0000004c, OP: 25
+[COMPL ] Time: 365000, ROB_ID: 5, Val: 00000014
+[COMMIT] Time: 365000, ROB_ID: 2, PC: 00000030, OP:  1, RD:  8, Val: 00040000
 Time:               365000 | ISSUE: PC=0000004c | Op=19 | DestROB= 9 | RD= 0
 Time:               375000 | ISSUE: PC=00000050 | Op=18 | DestROB=10 | RD=14
 [ISSUE ] Time: 375000, ROB_ID: 10, PC: 00000050, OP: 24
-[COMPL ] Time: 375000, ROB_ID: 5, Val: 00000014
-RS: Issued op=01 rob_id= 3 to FU
+RS: Issued op=01 rob_id= 8 to FU
 [ISSUE ] Time: 385000, ROB_ID: 11, PC: 00000054, OP: 24
 Time:               385000 | ISSUE: PC=00000054 | Op=18 | DestROB=11 | RD=15
 Time:               395000 | ISSUE: PC=00000058 | Op=1a | DestROB=12 | RD=15
 [ISSUE ] Time: 395000, ROB_ID: 12, PC: 00000058, OP: 26
+[COMPL ] Time: 395000, ROB_ID: 8, Val: 00000064
+RS: Issued op=01 rob_id= 3 to FU
 [ISSUE ] Time: 405000, ROB_ID: 13, PC: 0000005c, OP: 25
-[COMPL ] Time: 405000, ROB_ID: 3, Val: 0000000a
 Time:               405000 | ISSUE: PC=0000005c | Op=19 | DestROB=13 | RD= 4
 Time:               415000 | ISSUE: PC=00000060 | Op=18 | DestROB=14 | RD=15
 [ISSUE ] Time: 415000, ROB_ID: 14, PC: 00000060, OP: 24
-[COMMIT] Time: 415000, ROB_ID: 3, PC: 00000034, OP:  1
-RS: Issued op=01 rob_id= 8 to FU
 [ISSUE ] Time: 425000, ROB_ID: 15, PC: 00000064, OP:  1
+[COMPL ] Time: 425000, ROB_ID: 3, Val: 0000000a
 Time:               425000 | ISSUE: PC=00000064 | Op=01 | DestROB=15 | RD=15
 Time:               435000 | ISSUE: PC=00000068 | Op=19 | DestROB= 0 | RD= 0
 [ISSUE ] Time: 435000, ROB_ID: 0, PC: 00000068, OP: 25
-[COMPL ] Time: 435000, ROB_ID: 4, Val: 00000000
+[COMMIT] Time: 435000, ROB_ID: 3, PC: 00000034, OP:  1, RD: 15, Val: 0000000a
 [ISSUE ] Time: 445000, ROB_ID: 1, PC: 0000006c, OP: 24
-[COMPL ] Time: 445000, ROB_ID: 8, Val: 00000064
-[COMMIT] Time: 445000, ROB_ID: 4, PC: 00000038, OP: 25
 Time:               445000 | ISSUE: PC=0000006c | Op=18 | DestROB= 1 | RD=15
 Time:               455000 | ISSUE: PC=00000070 | Op=01 | DestROB= 2 | RD=15
 [ISSUE ] Time: 455000, ROB_ID: 2, PC: 00000070, OP:  1
-[COMPL ] Time: 455000, ROB_ID: 6, Val: 00000000
-[COMMIT] Time: 455000, ROB_ID: 5, PC: 0000003c, OP:  1
+[LSB] STORE COMPL: Time=455000, Addr=0003ffec, Data=0000000a, Mask=1111
 [ISSUE ] Time: 465000, ROB_ID: 3, PC: 00000074, OP: 25
-[COMMIT] Time: 465000, ROB_ID: 6, PC: 00000040, OP: 25
+[COMPL ] Time: 465000, ROB_ID: 4, Val: 00000000
 Time:               465000 | ISSUE: PC=00000074 | Op=19 | DestROB= 3 | RD= 0
-Time:               475000 | ISSUE: PC=00000078 | Op=18 | DestROB= 4 | RD=15
-[ISSUE ] Time: 475000, ROB_ID: 4, PC: 00000078, OP: 24
-[COMPL ] Time: 475000, ROB_ID: 7, Val: 00000000
-[ISSUE ] Time: 485000, ROB_ID: 5, PC: 0000007c, OP:  1
-[COMMIT] Time: 485000, ROB_ID: 7, PC: 00000044, OP: 25
-Time:               485000 | ISSUE: PC=0000007c | Op=01 | DestROB= 5 | RD=15
-Time:               495000 | ISSUE: PC=00000080 | Op=19 | DestROB= 6 | RD= 0
-[ISSUE ] Time: 495000, ROB_ID: 6, PC: 00000080, OP: 25
-[COMPL ] Time: 495000, ROB_ID: 9, Val: 00000000
-[COMMIT] Time: 495000, ROB_ID: 8, PC: 00000048, OP:  1
-[ISSUE ] Time: 505000, ROB_ID: 7, PC: 00000084, OP: 24
-[COMMIT] Time: 505000, ROB_ID: 9, PC: 0000004c, OP: 25
-Time:               505000 | ISSUE: PC=00000084 | Op=18 | DestROB= 7 | RD=14
-Time:               515000 | ISSUE: PC=00000088 | Op=18 | DestROB= 8 | RD=15
-[ISSUE ] Time: 515000, ROB_ID: 8, PC: 00000088, OP: 24
-[ISSUE ] Time: 525000, ROB_ID: 9, PC: 0000008c, OP:  1
-[COMPL ] Time: 525000, ROB_ID: 10, Val: 0000000a
-Time:               525000 | ISSUE: PC=0000008c | Op=01 | DestROB= 9 | RD=15
-[COMMIT] Time: 535000, ROB_ID: 10, PC: 00000050, OP: 24
-[ISSUE ] Time: 545000, ROB_ID: 10, PC: 00000090, OP:  1
-Time:               545000 | ISSUE: PC=00000090 | Op=01 | DestROB=10 | RD=10
-[COMPL ] Time: 565000, ROB_ID: 11, Val: 00000014
-[COMMIT] Time: 575000, ROB_ID: 11, PC: 00000054, OP: 24
+[COMMIT] Time: 475000, ROB_ID: 4, PC: 00000038, OP: 25, RD: 12, Val: 00000000
+[ISSUE ] Time: 485000, ROB_ID: 4, PC: 00000078, OP: 24
+[COMMIT] Time: 485000, ROB_ID: 5, PC: 0000003c, OP:  1, RD: 15, Val: 00000014
+Time:               485000 | ISSUE: PC=00000078 | Op=18 | DestROB= 4 | RD=15
+Time:               495000 | ISSUE: PC=0000007c | Op=01 | DestROB= 5 | RD=15
+[ISSUE ] Time: 495000, ROB_ID: 5, PC: 0000007c, OP:  1
+[LSB] STORE COMPL: Time=505000, Addr=0003ffe8, Data=00000014, Mask=1111
+[COMPL ] Time: 515000, ROB_ID: 6, Val: 00000000
+[COMMIT] Time: 525000, ROB_ID: 6, PC: 00000040, OP: 25, RD:  8, Val: 00000000
+Time:               535000 | ISSUE: PC=00000080 | Op=19 | DestROB= 6 | RD= 0
+[ISSUE ] Time: 535000, ROB_ID: 6, PC: 00000080, OP: 25
+[LSB] STORE COMPL: Time=545000, Addr=0003ffe4, Data=00000000, Mask=1111
+[COMPL ] Time: 555000, ROB_ID: 7, Val: 00000000
+[COMMIT] Time: 565000, ROB_ID: 7, PC: 00000044, OP: 25, RD:  4, Val: 00000000
+Time:               575000 | ISSUE: PC=00000084 | Op=18 | DestROB= 7 | RD=14
+[ISSUE ] Time: 575000, ROB_ID: 7, PC: 00000084, OP: 24
+[COMMIT] Time: 575000, ROB_ID: 8, PC: 00000048, OP:  1, RD: 15, Val: 00000064
+[ISSUE ] Time: 585000, ROB_ID: 8, PC: 00000088, OP: 24
+Time:               585000 | ISSUE: PC=00000088 | Op=18 | DestROB= 8 | RD=15
+[LSB] STORE COMPL: Time=595000, Addr=0003ffe0, Data=00000064, Mask=1111
+[COMPL ] Time: 605000, ROB_ID: 9, Val: 00000000
+[COMMIT] Time: 615000, ROB_ID: 9, PC: 0000004c, OP: 25, RD:  0, Val: 00000000
+[LSB] LOAD COMPL: Time=615000, Addr=0003ffec, Data=0000000a (Raw)
+[ISSUE ] Time: 625000, ROB_ID: 9, PC: 0000008c, OP:  1
+Time:               625000 | ISSUE: PC=0000008c | Op=01 | DestROB= 9 | RD=15
+[COMPL ] Time: 635000, ROB_ID: 10, Val: 0000000a
+[COMMIT] Time: 645000, ROB_ID: 10, PC: 00000050, OP: 24, RD: 14, Val: 0000000a
+Time:               655000 | ISSUE: PC=00000090 | Op=01 | DestROB=10 | RD=10
+[ISSUE ] Time: 655000, ROB_ID: 10, PC: 00000090, OP:  1
+[LSB] LOAD COMPL: Time=655000, Addr=0003ffe8, Data=00000014 (Raw)
+[COMPL ] Time: 675000, ROB_ID: 11, Val: 00000014
 RS: Issued op=1a rob_id=12 to FU
-[ISSUE ] Time: 585000, ROB_ID: 11, PC: 00000094, OP: 24
-Time:               585000 | ISSUE: PC=00000094 | Op=18 | DestROB=11 | RD= 8
-[COMPL ] Time: 635000, ROB_ID: 12, Val: 000000c8
-[COMMIT] Time: 645000, ROB_ID: 12, PC: 00000058, OP: 26
-Time:               655000 | ISSUE: PC=00000098 | Op=01 | DestROB=12 | RD= 2
-[ISSUE ] Time: 655000, ROB_ID: 12, PC: 00000098, OP:  1
+[COMMIT] Time: 685000, ROB_ID: 11, PC: 00000054, OP: 24, RD: 15, Val: 00000014
+Time:               695000 | ISSUE: PC=00000094 | Op=18 | DestROB=11 | RD= 8
+[ISSUE ] Time: 695000, ROB_ID: 11, PC: 00000094, OP: 24
+[COMPL ] Time: 745000, ROB_ID: 12, Val: 000000c8
+[COMMIT] Time: 755000, ROB_ID: 12, PC: 00000058, OP: 26, RD: 15, Val: 000000c8
+[ISSUE ] Time: 765000, ROB_ID: 12, PC: 00000098, OP:  1
+Time:               765000 | ISSUE: PC=00000098 | Op=01 | DestROB=12 | RD= 2
 RS: Issued op=01 rob_id=12 to FU
-[COMPL ] Time: 665000, ROB_ID: 13, Val: 00000000
-[COMMIT] Time: 675000, ROB_ID: 13, PC: 0000005c, OP: 25
-[ISSUE ] Time: 685000, ROB_ID: 13, PC: 0000009c, OP: 12
-[COMPL ] Time: 685000, ROB_ID: 12, Val: 00040000
-Time:               685000 | ISSUE: PC=0000009c | Op=0c | DestROB=13 | RD= 0
-[COMPL ] Time: 695000, ROB_ID: 14, Val: 00000064
+[LSB] STORE COMPL: Time=775000, Addr=0003ffe4, Data=000000c8, Mask=1111
+[COMPL ] Time: 785000, ROB_ID: 13, Val: 00000000
+[COMPL ] Time: 795000, ROB_ID: 12, Val: 00040000
+[COMMIT] Time: 795000, ROB_ID: 13, PC: 0000005c, OP: 25, RD:  4, Val: 00000000
+[LSB] LOAD COMPL: Time=795000, Addr=0003ffe0, Data=00000064 (Raw)
+[ISSUE ] Time: 805000, ROB_ID: 13, PC: 0000009c, OP: 12
+Time:               805000 | ISSUE: PC=0000009c | Op=0c | DestROB=13 | RD= 0
+[COMPL ] Time: 815000, ROB_ID: 14, Val: 00000064
 RS: Issued op=0c rob_id=13 to FU
-[COMMIT] Time: 705000, ROB_ID: 14, PC: 00000060, OP: 24
-Time:               715000 | ISSUE: PC=000000a0 | Op=00 | DestROB=14 | RD= 0
-[ISSUE ] Time: 715000, ROB_ID: 14, PC: 000000a0, OP:  0
-[COMPL ] Time: 715000, ROB_ID: 13, Val: 000000a0
+[COMMIT] Time: 825000, ROB_ID: 14, PC: 00000060, OP: 24, RD: 15, Val: 00000064
+Time:               835000 | ISSUE: PC=000000a0 | Op=00 | DestROB=14 | RD= 0
+[ISSUE ] Time: 835000, ROB_ID: 14, PC: 000000a0, OP:  0
+[COMPL ] Time: 835000, ROB_ID: 13, Val: 000000a0
 RS: Issued op=01 rob_id=15 to FU
-[COMPL ] Time: 745000, ROB_ID: 15, Val: 00000065
-[COMMIT] Time: 755000, ROB_ID: 15, PC: 00000064, OP:  1
-[ISSUE ] Time: 765000, ROB_ID: 15, PC: 000000a4, OP:  0
-Time:               765000 | ISSUE: PC=000000a4 | Op=00 | DestROB=15 | RD= 0
-[COMPL ] Time: 775000, ROB_ID: 0, Val: 00000000
-[COMMIT] Time: 785000, ROB_ID: 0, PC: 00000068, OP: 25
-Time:               795000 | ISSUE: PC=000000a8 | Op=00 | DestROB= 0 | RD= 0
-[ISSUE ] Time: 795000, ROB_ID: 0, PC: 000000a8, OP:  0
-[COMPL ] Time: 805000, ROB_ID: 1, Val: 00000065
-[COMMIT] Time: 815000, ROB_ID: 1, PC: 0000006c, OP: 24
+[COMPL ] Time: 865000, ROB_ID: 15, Val: 00000065
+[COMMIT] Time: 875000, ROB_ID: 15, PC: 00000064, OP:  1, RD: 15, Val: 00000065
+[ISSUE ] Time: 885000, ROB_ID: 15, PC: 000000a4, OP:  0
+Time:               885000 | ISSUE: PC=000000a4 | Op=00 | DestROB=15 | RD= 0
+[LSB] STORE COMPL: Time=895000, Addr=0003ffe0, Data=00000065, Mask=1111
+[COMPL ] Time: 905000, ROB_ID: 0, Val: 00000000
+[COMMIT] Time: 915000, ROB_ID: 0, PC: 00000068, OP: 25, RD:  0, Val: 00000000
+[LSB] LOAD COMPL: Time=915000, Addr=0003ffe0, Data=00000065 (Raw)
+[ISSUE ] Time: 925000, ROB_ID: 0, PC: 000000a8, OP:  0
+Time:               925000 | ISSUE: PC=000000a8 | Op=00 | DestROB= 0 | RD= 0
+[COMPL ] Time: 935000, ROB_ID: 1, Val: 00000065
 RS: Issued op=01 rob_id= 2 to FU
-[ISSUE ] Time: 825000, ROB_ID: 1, PC: 000000ac, OP:  0
-Time:               825000 | ISSUE: PC=000000ac | Op=00 | DestROB= 1 | RD= 0
-[COMPL ] Time: 835000, ROB_ID: 2, Val: 00000067
-[COMMIT] Time: 845000, ROB_ID: 2, PC: 00000070, OP:  1
-Time:               855000 | ISSUE: PC=000000b0 | Op=00 | DestROB= 2 | RD= 0
-[ISSUE ] Time: 855000, ROB_ID: 2, PC: 000000b0, OP:  0
-[COMPL ] Time: 865000, ROB_ID: 3, Val: 00000000
-[COMMIT] Time: 875000, ROB_ID: 3, PC: 00000074, OP: 25
-[ISSUE ] Time: 885000, ROB_ID: 3, PC: 000000b4, OP:  0
-Time:               885000 | ISSUE: PC=000000b4 | Op=00 | DestROB= 3 | RD= 0
-[COMPL ] Time: 895000, ROB_ID: 4, Val: 00000067
+[COMMIT] Time: 945000, ROB_ID: 1, PC: 0000006c, OP: 24, RD: 15, Val: 00000065
+Time:               955000 | ISSUE: PC=000000ac | Op=00 | DestROB= 1 | RD= 0
+[ISSUE ] Time: 955000, ROB_ID: 1, PC: 000000ac, OP:  0
+[COMPL ] Time: 965000, ROB_ID: 2, Val: 00000067
+[COMMIT] Time: 975000, ROB_ID: 2, PC: 00000070, OP:  1, RD: 15, Val: 00000067
+[ISSUE ] Time: 985000, ROB_ID: 2, PC: 000000b0, OP:  0
+Time:               985000 | ISSUE: PC=000000b0 | Op=00 | DestROB= 2 | RD= 0
+[LSB] STORE COMPL: Time=995000, Addr=0003ffe0, Data=00000067, Mask=1111
+[COMPL ] Time: 1005000, ROB_ID: 3, Val: 00000000
+[COMMIT] Time: 1015000, ROB_ID: 3, PC: 00000074, OP: 25, RD:  0, Val: 00000000
+[LSB] LOAD COMPL: Time=1015000, Addr=0003ffe0, Data=00000067 (Raw)
+[ISSUE ] Time: 1025000, ROB_ID: 3, PC: 000000b4, OP:  0
+Time:              1025000 | ISSUE: PC=000000b4 | Op=00 | DestROB= 3 | RD= 0
+[COMPL ] Time: 1035000, ROB_ID: 4, Val: 00000067
 RS: Issued op=01 rob_id= 5 to FU
-[COMMIT] Time: 905000, ROB_ID: 4, PC: 00000078, OP: 24
-Time:               915000 | ISSUE: PC=000000b8 | Op=00 | DestROB= 4 | RD= 0
-[ISSUE ] Time: 915000, ROB_ID: 4, PC: 000000b8, OP:  0
-[COMPL ] Time: 925000, ROB_ID: 5, Val: 0000006a
-[COMMIT] Time: 935000, ROB_ID: 5, PC: 0000007c, OP:  1
-[ISSUE ] Time: 945000, ROB_ID: 5, PC: 000000bc, OP:  0
-Time:               945000 | ISSUE: PC=000000bc | Op=00 | DestROB= 5 | RD= 0
-[COMPL ] Time: 955000, ROB_ID: 6, Val: 00000000
-[COMMIT] Time: 965000, ROB_ID: 6, PC: 00000080, OP: 25
-Time:               975000 | ISSUE: PC=000000c0 | Op=00 | DestROB= 6 | RD= 0
-[ISSUE ] Time: 975000, ROB_ID: 6, PC: 000000c0, OP:  0
-[COMPL ] Time: 985000, ROB_ID: 7, Val: 000000c8
-[COMMIT] Time: 995000, ROB_ID: 7, PC: 00000084, OP: 24
-[ISSUE ] Time: 1005000, ROB_ID: 7, PC: 000000c4, OP:  0
-Time:              1005000 | ISSUE: PC=000000c4 | Op=00 | DestROB= 7 | RD= 0
-[COMPL ] Time: 1025000, ROB_ID: 8, Val: 0000006a
-[COMMIT] Time: 1035000, ROB_ID: 8, PC: 00000088, OP: 24
+[COMMIT] Time: 1045000, ROB_ID: 4, PC: 00000078, OP: 24, RD: 15, Val: 00000067
+Time:              1055000 | ISSUE: PC=000000b8 | Op=00 | DestROB= 4 | RD= 0
+[ISSUE ] Time: 1055000, ROB_ID: 4, PC: 000000b8, OP:  0
+[COMPL ] Time: 1065000, ROB_ID: 5, Val: 0000006a
+[COMMIT] Time: 1075000, ROB_ID: 5, PC: 0000007c, OP:  1, RD: 15, Val: 0000006a
+[ISSUE ] Time: 1085000, ROB_ID: 5, PC: 000000bc, OP:  0
+Time:              1085000 | ISSUE: PC=000000bc | Op=00 | DestROB= 5 | RD= 0
+[LSB] STORE COMPL: Time=1095000, Addr=0003ffe0, Data=0000006a, Mask=1111
+[COMPL ] Time: 1105000, ROB_ID: 6, Val: 00000000
+[COMMIT] Time: 1115000, ROB_ID: 6, PC: 00000080, OP: 25, RD:  0, Val: 00000000
+[LSB] LOAD COMPL: Time=1115000, Addr=0003ffe4, Data=000000c8 (Raw)
+[ISSUE ] Time: 1125000, ROB_ID: 6, PC: 000000c0, OP:  0
+Time:              1125000 | ISSUE: PC=000000c0 | Op=00 | DestROB= 6 | RD= 0
+[COMPL ] Time: 1135000, ROB_ID: 7, Val: 000000c8
+[COMMIT] Time: 1145000, ROB_ID: 7, PC: 00000084, OP: 24, RD: 14, Val: 000000c8
+Time:              1155000 | ISSUE: PC=000000c4 | Op=00 | DestROB= 7 | RD= 0
+[ISSUE ] Time: 1155000, ROB_ID: 7, PC: 000000c4, OP:  0
+[LSB] LOAD COMPL: Time=1155000, Addr=0003ffe0, Data=0000006a (Raw)
+[COMPL ] Time: 1175000, ROB_ID: 8, Val: 0000006a
 RS: Issued op=01 rob_id= 9 to FU
-[ISSUE ] Time: 1045000, ROB_ID: 8, PC: 000000c8, OP:  0
-Time:              1045000 | ISSUE: PC=000000c8 | Op=00 | DestROB= 8 | RD= 0
-[COMPL ] Time: 1055000, ROB_ID: 9, Val: 00000132
+[COMMIT] Time: 1185000, ROB_ID: 8, PC: 00000088, OP: 24, RD: 15, Val: 0000006a
+Time:              1195000 | ISSUE: PC=000000c8 | Op=00 | DestROB= 8 | RD= 0
+[ISSUE ] Time: 1195000, ROB_ID: 8, PC: 000000c8, OP:  0
+[LSB] LOAD COMPL: Time=1195000, Addr=0003fffc, Data=00000000 (Raw)
+[COMPL ] Time: 1205000, ROB_ID: 9, Val: 00000132
+[COMPL ] Time: 1215000, ROB_ID: 11, Val: 00000000
+[COMMIT] Time: 1215000, ROB_ID: 9, PC: 0000008c, OP:  1, RD: 15, Val: 00000132
 RS: Issued op=01 rob_id=10 to FU
-[COMPL ] Time: 1065000, ROB_ID: 11, Val: 00000000
-[COMMIT] Time: 1065000, ROB_ID: 9, PC: 0000008c, OP:  1
-Time:              1075000 | ISSUE: PC=000000cc | Op=00 | DestROB= 9 | RD= 0
-[ISSUE ] Time: 1075000, ROB_ID: 9, PC: 000000cc, OP:  0
-[COMPL ] Time: 1085000, ROB_ID: 10, Val: 00000132
-[COMMIT] Time: 1095000, ROB_ID: 10, PC: 00000090, OP:  1
-[ISSUE ] Time: 1105000, ROB_ID: 10, PC: 000000d0, OP:  0
-[COMMIT] Time: 1105000, ROB_ID: 11, PC: 00000094, OP: 24
-Time:              1105000 | ISSUE: PC=000000d0 | Op=00 | DestROB=10 | RD= 0
-Time:              1115000 | ISSUE: PC=000000d4 | Op=00 | DestROB=11 | RD= 0
-[ISSUE ] Time: 1115000, ROB_ID: 11, PC: 000000d4, OP:  0
-[COMMIT] Time: 1115000, ROB_ID: 12, PC: 00000098, OP:  1
-Time:              1125000 | ISSUE: PC=000000d8 | Op=00 | DestROB=12 | RD= 0
-[ISSUE ] Time: 1145000, ROB_ID: 0, PC: 00000008, OP:  1
-Time:              1145000 | ISSUE: PC=00000008 | Op=01 | DestROB= 0 | RD= 1
-Time:              1155000 | ISSUE: PC=0000000c | Op=01 | DestROB= 1 | RD= 0
-[ISSUE ] Time: 1155000, ROB_ID: 1, PC: 0000000c, OP:  1
+[ISSUE ] Time: 1225000, ROB_ID: 9, PC: 000000cc, OP:  0
+Time:              1225000 | ISSUE: PC=000000cc | Op=00 | DestROB= 9 | RD= 0
+[COMPL ] Time: 1235000, ROB_ID: 10, Val: 00000132
+[COMMIT] Time: 1245000, ROB_ID: 10, PC: 00000090, OP:  1, RD: 10, Val: 00000132
+Time:              1255000 | ISSUE: PC=000000d0 | Op=00 | DestROB=10 | RD= 0
+[ISSUE ] Time: 1255000, ROB_ID: 10, PC: 000000d0, OP:  0
+[COMMIT] Time: 1255000, ROB_ID: 11, PC: 00000094, OP: 24, RD:  8, Val: 00000000
+[ISSUE ] Time: 1265000, ROB_ID: 11, PC: 000000d4, OP:  0
+[COMMIT] Time: 1265000, ROB_ID: 12, PC: 00000098, OP:  1, RD:  2, Val: 00040000
+Time:              1265000 | ISSUE: PC=000000d4 | Op=00 | DestROB=11 | RD= 0
+Time:              1275000 | ISSUE: PC=000000d8 | Op=00 | DestROB=12 | RD= 0
+Time:              1295000 | ISSUE: PC=00000008 | Op=01 | DestROB= 0 | RD= 1
+[ISSUE ] Time: 1295000, ROB_ID: 0, PC: 00000008, OP:  1
 RS: Issued op=01 rob_id= 0 to FU
-[ISSUE ] Time: 1165000, ROB_ID: 2, PC: 00000010, OP:  1
-Time:              1165000 | ISSUE: PC=00000010 | Op=01 | DestROB= 2 | RD= 0
-Time:              1175000 | ISSUE: PC=00000014 | Op=01 | DestROB= 3 | RD= 0
-[ISSUE ] Time: 1175000, ROB_ID: 3, PC: 00000014, OP:  1
-[COMPL ] Time: 1175000, ROB_ID: 0, Val: 00000132
+[ISSUE ] Time: 1305000, ROB_ID: 1, PC: 0000000c, OP:  1
+Time:              1305000 | ISSUE: PC=0000000c | Op=01 | DestROB= 1 | RD= 0
+Time:              1315000 | ISSUE: PC=00000010 | Op=01 | DestROB= 2 | RD= 0
+[ISSUE ] Time: 1315000, ROB_ID: 2, PC: 00000010, OP:  1
+[ISSUE ] Time: 1325000, ROB_ID: 3, PC: 00000014, OP:  1
+[COMPL ] Time: 1325000, ROB_ID: 0, Val: 00000132
+Time:              1325000 | ISSUE: PC=00000014 | Op=01 | DestROB= 3 | RD= 0
+Time:              1335000 | ISSUE: PC=00000018 | Op=01 | DestROB= 4 | RD= 0
+[ISSUE ] Time: 1335000, ROB_ID: 4, PC: 00000018, OP:  1
+[COMMIT] Time: 1335000, ROB_ID: 0, PC: 00000008, OP:  1, RD:  1, Val: 00000132
 RS: Issued op=01 rob_id= 2 to FU
-[ISSUE ] Time: 1185000, ROB_ID: 4, PC: 00000018, OP:  1
-[COMMIT] Time: 1185000, ROB_ID: 0, PC: 00000008, OP:  1
-Time:              1185000 | ISSUE: PC=00000018 | Op=01 | DestROB= 4 | RD= 0
-Time:              1195000 | ISSUE: PC=0000001c | Op=01 | DestROB= 5 | RD= 0
-[ISSUE ] Time: 1195000, ROB_ID: 5, PC: 0000001c, OP:  1
-[COMPL ] Time: 1205000, ROB_ID: 2, Val: 00000000
+[ISSUE ] Time: 1345000, ROB_ID: 5, PC: 0000001c, OP:  1
+Time:              1345000 | ISSUE: PC=0000001c | Op=01 | DestROB= 5 | RD= 0
+[COMPL ] Time: 1355000, ROB_ID: 2, Val: 00000000
 RS: Issued op=01 rob_id= 5 to FU
-[COMPL ] Time: 1235000, ROB_ID: 5, Val: 00000000
+[COMPL ] Time: 1385000, ROB_ID: 5, Val: 00000000
 RS: Issued op=01 rob_id= 1 to FU
-[COMPL ] Time: 1265000, ROB_ID: 1, Val: 00000000
-[COMMIT] Time: 1275000, ROB_ID: 1, PC: 0000000c, OP:  1
+[COMPL ] Time: 1415000, ROB_ID: 1, Val: 00000000
 RS: Issued op=01 rob_id= 3 to FU
-[COMMIT] Time: 1285000, ROB_ID: 2, PC: 00000010, OP:  1
-[COMPL ] Time: 1295000, ROB_ID: 3, Val: 00000000
+[COMMIT] Time: 1425000, ROB_ID: 1, PC: 0000000c, OP:  1, RD:  0, Val: 00000000
+[COMMIT] Time: 1435000, ROB_ID: 2, PC: 00000010, OP:  1, RD:  0, Val: 00000000
+[COMPL ] Time: 1445000, ROB_ID: 3, Val: 00000000
+[COMMIT] Time: 1455000, ROB_ID: 3, PC: 00000014, OP:  1, RD:  0, Val: 00000000
 RS: Issued op=01 rob_id= 4 to FU
-[COMMIT] Time: 1305000, ROB_ID: 3, PC: 00000014, OP:  1
-[COMPL ] Time: 1325000, ROB_ID: 4, Val: 00000000
-[COMMIT] Time: 1335000, ROB_ID: 4, PC: 00000018, OP:  1
-[COMMIT] Time: 1345000, ROB_ID: 5, PC: 0000001c, OP:  1
-Result in x1:        306
+[COMPL ] Time: 1475000, ROB_ID: 4, Val: 00000000
+[COMMIT] Time: 1485000, ROB_ID: 4, PC: 00000018, OP:  1, RD:  0, Val: 00000000
+[COMMIT] Time: 1495000, ROB_ID: 5, PC: 0000001c, OP:  1, RD:  0, Val: 00000000
+Result in x1 (Unsigned):        306
+Result in x1 (Signed):           306
 TOTAL_BRANCH:          0
 CORRECT_BRANCH:          0
-../tomasulo/sim/testbench.v:126: $finish called at 1365000 (1ps)
+testbench.v:157: $finish called at 1515000 (1ps)

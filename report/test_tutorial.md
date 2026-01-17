@@ -37,20 +37,9 @@ python3 final_test_tomasulo.py
 测试点位于`test/src/ooo_test.c`，如需看到OoO的执行结果，你需要运行：
 
 ```bash
-cd test
+cd test && make PROG=ooo_test ../tomasulo/sim/inst_rom.hex
 
-# 1. 编译 C 代码 (使用 rv32im 架构支持乘法指令)
-# 注意：你需要根据你本地 gcc 的路径调整 LIBGCC_PATH，或者如果不需要链接库文件可去掉该部分
-make PROG=ooo_test \
-     CFLAGS="-march=rv32im -mabi=ilp32 -O0 -nostdlib" \
-     LIBGCC_PATH="/usr/lib/gcc/riscv64-unknown-elf/13.2.0/rv32im/ilp32"
-
-# 2. 准备仿真用的 ROM 文件 (testbench 默认读取当前目录下的 inst_rom.data)
-cp ../naive/sim/inst_rom.data inst_rom.data
-
-# 3. 运行仿真并将结果保存到 simulation_mul.log
-make sim > simulation.log
-
+cd ../tomasulo/sim && iverilog -g2012 -I ../src -o testbench.vvp testbench.v ../src/*.v && vvp testbench.vvp +HEX_FILE=inst_rom.hex > ../../test/simulation.log
 ```
 
 然后你可以在`simulation.log`中查看测试结果。我们添加了一些标记来帮助你识别乱序执行的过程。
