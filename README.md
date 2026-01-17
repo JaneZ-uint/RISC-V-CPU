@@ -6,6 +6,10 @@ This repository contains the final project for the CS2957 Computer Architecture 
 
 Both CPUs support the **RV32I** base integer instruction set. The Tomasulo CPU additionally supports the **RV32M** extension (hardware multiplication and division).
 
+## Draft
+
+![Tomasulo CPU Design (Draft)](design.png)
+
 ## Features
 
 ### 1. Naive CPU
