@@ -3,5 +3,7 @@ naive_cpu.vvp
 tomasulo_cpu.vcd
 inst_rom.data
 tomasulo/sim/testbench.vvp
+tomasulo/sim/out.vvp
 tomasulo/sim/tomasulo_cpu.vcd
 tomasulo/sim/inst_rom.data  
+test/m_extension_test.elf

@@ -232,7 +232,7 @@ module reorder_buffer(
                  $display("[COMPL ] Time: %0t, ROB_ID: %0d, Val: %h", $time, cdb_rob_id, cdb_value);
             end
             if (commit_ack && !empty && ready[head]) begin
-                 $display("[COMMIT] Time: %0t, ROB_ID: %0d, PC: %h, OP: %d", $time, head, pc[head], op[head]);
+                 $display("[COMMIT] Time: %0t, ROB_ID: %0d, PC: %h, OP: %d, RD: %d, Val: %h", $time, head, pc[head], op[head], rd[head], value[head]);
             end
         end
     end

@@ -41,6 +41,7 @@ module load_store_buffer #(
     // Commit/Writeback to ROB (via CDB or dedicated path?)
     // Here we assume LSB writes to CDB
     input wire cdb_grant,
+    input wire [`ROB_ID_WIDTH-1:0] rob_head,
     output reg lsb_out_valid,
     output reg [`ROB_ID_WIDTH-1:0] lsb_out_rob_id,
     output reg [`RegBus] lsb_out_value
@@ -189,7 +190,7 @@ module load_store_buffer #(
                                 mem_req <= 1;
                                 state <= WAIT_MEM; 
                                 
-                            end else if (op_buf[head] == `ALU_OP_STORE) begin
+                            end else if (op_buf[head] == `ALU_OP_STORE && dest_buf[head] == rob_head) begin
                                 // STORE
                                 if (!qk_valid_buf[head]) begin
                                     mem_addr <= head_addr;
@@ -270,6 +271,14 @@ module load_store_buffer #(
     always @(posedge clk) begin
          if (we && full) $display("LSB DROP! Time=%t", $time);
          // $display("LSB State: count=%d head=%d tail=%d full=%b push=%b pop=%b Time=%t", count, head, tail, full, push, pop, $time);
+    end
+    always @(posedge clk) begin 
+         if (mem_req && mem_ready) begin 
+             if (mem_we) 
+                 $display("[LSB] STORE COMPL: Time=%0t, Addr=%h, Data=%h, Mask=%b", $time, mem_addr, mem_wdata, mem_mask); 
+             else 
+                 $display("[LSB] LOAD COMPL: Time=%0t, Addr=%h, Data=%h (Raw)", $time, mem_addr, mem_data); 
+         end 
     end
 endmodule
 

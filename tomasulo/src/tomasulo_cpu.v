@@ -376,6 +376,7 @@ module tomasulo_cpu(
         .vj(lsb_vj), .qj(lsb_qj), .qj_valid(lsb_qj_valid),
         .vk(lsb_vk), .qk(lsb_qk), .qk_valid(lsb_qk_valid),
         .dest(lsb_dest), .imm(lsb_imm), .pc(lsb_pc),
+        .rob_head(commit_id),
         .full(lsb_full),
         .cdb_valid(cdb_valid), .cdb_rob_id(cdb_rob_id), .cdb_value(cdb_value),
         .cdb_grant(lsb_grant), 

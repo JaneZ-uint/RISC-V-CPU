@@ -43,6 +43,23 @@ module testbench;
         .mem_sel_o(mem_sel_o)
     );
 
+    // --- Benchmark Spy Logic ---
+    reg [31:0] benchmark_result;
+    reg benchmark_result_valid;
+
+    initial begin
+        benchmark_result = 0;
+        benchmark_result_valid = 0;
+    end
+
+    // Capture a0 before it gets overwritten by the startup code at PC=0x8
+    always @(posedge clk) begin
+        if (u_cpu.commit_valid && u_cpu.commit_pc == 32'h00000008) begin
+             benchmark_result <= u_cpu.u_regfile.regs[10];
+             benchmark_result_valid <= 1'b1;
+        end
+    end
+
     // --- Clock ---
     initial begin
         clk = 0;
@@ -88,6 +105,13 @@ module testbench;
             if (mem_req_o && mem_we_o) begin
                 // Check exit condition for array_test benchmarks
                 if (mem_addr_o == 32'h00030004) begin
+                    $display("Result in x1 (Unsigned): %d", u_cpu.u_regfile.regs[1]);
+                    
+                    if (benchmark_result_valid)
+                        $display("Result in a0 (Unsigned): %d", benchmark_result);
+                    else
+                        $display("Result in a0 (Unsigned): %d", u_cpu.u_regfile.regs[10]);
+                    
                     $display("TOTAL_BRANCH: %d", u_cpu.u_rob.cnt_total_branch);
                     $display("CORRECT_BRANCH: %d", u_cpu.u_rob.cnt_correct_branch);
                     $finish;
