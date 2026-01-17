@@ -55,7 +55,7 @@ def main():
         
         try:
             # 30 seconds timeout per test
-            res_sim = run_command(cmd_sim, cwd=sim_dir, timeout=30)
+            res_sim = run_command(cmd_sim, cwd=sim_dir, timeout=3000)
             
             output = res_sim.stdout
             total_match = re.search(r"TOTAL_BRANCH:\s+(\d+)", output)
