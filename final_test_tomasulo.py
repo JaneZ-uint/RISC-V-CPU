@@ -89,3 +89,4 @@ if not failed_tests:
 else:
     print(f"Failed tests: {failed_tests}")
     sys.exit(1)
+    

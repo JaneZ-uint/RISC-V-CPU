@@ -8,8 +8,9 @@ module testbench;
     reg rst;
     
     // --- Memory ---
-    // 256KB = 65536 words
-    reg [31:0] ram [0:65535]; 
+    // 256KB = 262144 bytes
+    // Changed to 8-bit width to support standard GCC/Objcopy Verilog Hex format
+    reg [7:0] ram [0:262143]; 
     
     // --- Interfaces ---
     wire [`InstBus] inst_i;
@@ -50,20 +51,27 @@ module testbench;
 
     // --- Utils ---
     integer i;
+    reg [1023:0] hex_filename;
 
     // --- Memory Logic ---
     initial begin
         // Init RAM to 0
-        for(i=0; i<65536; i=i+1) ram[i] = 32'b0;
+        for(i=0; i<262144; i=i+1) ram[i] = 8'b0;
         
-        // Load Hex
-        $readmemh("inst_rom.data", ram);
+        // Load Hex (Byte oriented)
+        if ($value$plusargs("HEX_FILE=%s", hex_filename)) 
+            $readmemh(hex_filename, ram); 
+        else 
+            $readmemh("inst_rom.hex", ram);
     end
     
-    assign inst_i = (inst_ce_o == `ReadEnable) ? ram[inst_addr_o[31:2]] : `ZeroWord;
+    // Fetch: Little Endian - Combine 4 bytes into 1 word
+    assign inst_i = (inst_ce_o == `ReadEnable) ? 
+                    {ram[inst_addr_o+3], ram[inst_addr_o+2], ram[inst_addr_o+1], ram[inst_addr_o]} : 
+                    `ZeroWord;
     
-    wire [31:0] word_addr = mem_addr_o[31:2];
-    assign mem_data_i = ram[word_addr]; 
+    // Load: Little Endian - Combine 4 bytes into 1 word
+    assign mem_data_i = {ram[mem_addr_o+3], ram[mem_addr_o+2], ram[mem_addr_o+1], ram[mem_addr_o]}; 
     
     always @(posedge clk) begin
         if (rst == `RstEnable) begin
@@ -78,21 +86,19 @@ module testbench;
             end
             
             if (mem_req_o && mem_we_o) begin
-                // Check exit condition for array_test benchmarks (Write to 0x30004)
-                if ({word_addr, 2'b00} == 32'h00030004) begin
+                // Check exit condition for array_test benchmarks
+                if (mem_addr_o == 32'h00030004) begin
                     $display("TOTAL_BRANCH: %d", u_cpu.u_rob.cnt_total_branch);
                     $display("CORRECT_BRANCH: %d", u_cpu.u_rob.cnt_correct_branch);
                     $finish;
                 end
 
-                 if (mem_sel_o == 4'b1111) begin
-                      ram[word_addr] <= mem_data_o;
-                 end else begin
-                     if(mem_sel_o[0]) ram[word_addr][7:0]   <= mem_data_o[7:0];
-                     if(mem_sel_o[1]) ram[word_addr][15:8]  <= mem_data_o[15:8];
-                     if(mem_sel_o[2]) ram[word_addr][23:16] <= mem_data_o[23:16];
-                     if(mem_sel_o[3]) ram[word_addr][31:24] <= mem_data_o[31:24];
-                 end
+
+                // Store - Little Endian
+                if(mem_sel_o[0]) ram[mem_addr_o]   <= mem_data_o[7:0];
+                if(mem_sel_o[1]) ram[mem_addr_o+1] <= mem_data_o[15:8];
+                if(mem_sel_o[2]) ram[mem_addr_o+2] <= mem_data_o[23:16];
+                if(mem_sel_o[3]) ram[mem_addr_o+3] <= mem_data_o[31:24];
             end
         end
     end
@@ -118,7 +124,8 @@ module testbench;
              // Wait one cycle to ensure stability if needed
              @(posedge clk);
              
-             $display("Result in x1: %d", u_cpu.u_regfile.regs[1]);
+             $display("Result in x1 (Unsigned): %d", u_cpu.u_regfile.regs[1]);
+             $display("Result in x1 (Signed):   %d", $signed(u_cpu.u_regfile.regs[1]));
              
              // Keep stats for benchmark script
              $display("TOTAL_BRANCH: %d", u_cpu.u_rob.cnt_total_branch);
