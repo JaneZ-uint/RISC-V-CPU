@@ -82,39 +82,48 @@ This script will:
 *   Compile C test cases (like `sum`, `vector_add`, `vector_mul`) using `riscv64-unknown-elf-gcc`.
 *   Run the simulation and check the result against expected values.
 
+
 ### 2. Running Individual Tests Manually
 
-You can also compile and run specific tests manually.
+You can also compile and run specific tests manually. The build system uses standard Verilog Hex format (`.hex`).
 
-**Step 1: Compile the test program**
-Navigate to the `test/` directory and use `make` to compile a program (e.g., `vector_mul`).
+#### Method 1: Compile from Source (C/Assembly) and Run
 
-```bash
-cd test
-# For standard RV32I tests
-make PROG=vector_mul
+1.  **Navigate to the test directory**
+    ```bash
+    cd test
+    ```
 
-# For RV32M tests (Multiplication/Division)
-# Adjust LIBGCC_PATH to point to your toolchain's library location if needed
-make PROG=m_extension_test CFLAGS="-march=rv32im -mabi=ilp32 -O2 -nostdlib" LIBGCC_PATH="/path/to/libgcc.a"
-```
-This generates `inst_rom.data` (hex file) in `../naive/sim/`.
+2.  **Compile and Generate Hex**
+    Use the specific target for Tomasulo hex generation (`PROG` specifies the test case name sans extension).
+    ```bash
+    make clean
+    make ../tomasulo/sim/inst_rom.hex PROG=vector_mul
+    ```
 
-**Step 2: Copy the ROM file**
-Copy the generated instruction memory file to the Tomasulo simulation directory.
+3.  **Run Simulation**
+    The `make sim` command compiles the verilog and runs vvp with the correct parameters.
+    ```bash
+    make sim
+    ```
 
-```bash
-cp ../naive/sim/inst_rom.data ../tomasulo/sim/inst_rom.data
-```
+#### Method 2: Run with Existing Hex File
 
-**Step 3: Run the Simulation**
-Navigate to the simulation directory and run `iverilog`.
+If you already have a `.hex` file, you can run the simulator directly.
 
-```bash
-cd ../tomasulo/sim
-iverilog -I ../src -o testbench.vvp testbench.v ../src/*.v
-vvp testbench.vvp
-```
+1.  **Recompile Simulator (if needed)**
+    If you modified the Verilog source, rebuild the simulator executable (`out.vvp`).
+    ```bash
+    cd test
+    iverilog -o ../tomasulo/sim/out.vvp -I ../tomasulo/src ../tomasulo/sim/testbench.v ../tomasulo/src/*.v
+    ```
+
+2.  **Run Simulation with Hex File**
+    Pass the path to your hex file using the `+HEX_FILE` argument.
+    ```bash
+    vvp ../tomasulo/sim/out.vvp +HEX_FILE=/path/to/your_program.hex
+    ```
+
 
 ### 3. Verification of Out-of-Order Execution
 
