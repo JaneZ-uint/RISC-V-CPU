@@ -134,10 +134,12 @@ If you already have a `.hex` file, you can run the simulator directly.
 To verify the OoO capability specifically (observing instruction issue vs. completion times), you can run the special `ooo_test`:
 
 ```bash
-cd test
-# Create/Update src/ooo_test.c first (see issue log)
-make PROG=ooo_test CFLAGS="-march=rv32im -mabi=ilp32 -O0 -nostdlib"
-cp ../naive/sim/inst_rom.data inst_rom.data
-make sim > simulation.log
+cd test && make PROG=ooo_test ../tomasulo/sim/inst_rom.hex
+
+cd ../tomasulo/sim && iverilog -g2012 -I ../src -o testbench.vvp testbench.v ../src/*.v && vvp testbench.vvp +HEX_FILE=inst_rom.hex > ../../test/simulation.log
 ```
 Check `simulation.log` for `[ISSUE]` and `[COMPL]` timestamps.
+
+## Contributors
+*   Yihan Zhu : Tomasulo CPU Implementation, Branch Prediction, Test Framework, Documentation
+*   Jiaqi Xu : Tomasulo CPU Architecture Design, M-Extension, Debugging
