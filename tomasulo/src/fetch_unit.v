@@ -33,15 +33,9 @@ module fetch_unit(
     
     assign pc_stall = iq_full;
     
-    // =========================================================================
-    // BRANCH PREDICTION LOGIC (BHT + BTB)
-    // =========================================================================
-    
-    // --- BHT: 2-bit Saturating Counter ---
     reg [1:0] bht [0:255]; 
     integer i;
     
-    // --- BTB: Valid + Tag + Target ---
     // Width = 1(Valid) + 22(Tag=PC[31:10]) + 32(Target) = 55 bits
     reg [54:0] btb [0:255];
     
@@ -54,14 +48,12 @@ module fetch_unit(
     end
     
     // --- PREDICTION (Read Phase) ---
-    // Note: We use the PC that is currently being fetched (pc_wire)
-    // Because pc_reg updates PC in this cycle, we get the 'current' PC here.
     wire [`InstAddrBus] pc_wire;
     wire [7:0] index = pc_wire[9:2]; // Index mapping
     
     // BHT Lookup
     wire [1:0] bht_val = bht[index];
-    wire bht_pred_taken = bht_val[1]; // MSB 1 = Taken
+    wire bht_pred_taken = bht_val[1];
     
     // BTB Lookup
     wire [54:0] btb_entry = btb[index];
@@ -72,7 +64,6 @@ module fetch_unit(
     wire btb_hit = btb_valid && (btb_tag == pc_wire[31:10]);
     
     // Final Prediction
-    // Predict TAKEN only if BHT says Taken AND BTB matches (we know where to go)
     wire final_pred_taken = bht_pred_taken && btb_hit;
     wire [`InstAddrBus] final_pred_target = btb_target;
     
@@ -89,8 +80,6 @@ module fetch_unit(
                 btb[i] <= 55'b0;
             end
         end else if (bp_update_valid_i) begin
-            // 1. Update BHT
-            // Blocking assignment for temp calculation
             old_state = bht[upd_index];
             case (old_state)
                 2'b00: new_state = bp_update_taken_i ? 2'b01 : 2'b00;
@@ -100,16 +89,11 @@ module fetch_unit(
             endcase
             bht[upd_index] <= new_state;
             
-            // 2. Update BTB
             if (bp_update_taken_i) begin
                  btb[upd_index] <= {1'b1, bp_update_pc_i[31:10], bp_update_target_i};
             end
         end
     end
-
-    // =========================================================================
-    // COMPONENTS
-    // =========================================================================
 
     wire pc_ce;
     

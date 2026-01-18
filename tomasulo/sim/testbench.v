@@ -105,7 +105,7 @@ module testbench;
             if (mem_req_o && mem_we_o) begin
                 // Check exit condition for array_test benchmarks
                 if (mem_addr_o == 32'h00030004) begin
-                    $display("Result in x1 (Unsigned): %d", u_cpu.u_regfile.regs[1]);
+                    //$display("Result in x1 (Unsigned): %d", u_cpu.u_regfile.regs[1]);
                     
                     if (benchmark_result_valid)
                         $display("Result in a0 (Unsigned): %d", benchmark_result);

@@ -63,6 +63,7 @@ int main() {
     // 向量逐元素乘法
     for (int i = 0; i < n; i++) {
         C[i] = multiply(A[i], B[i]);
+        //C[i] = A[i] * B[i];  // 使用内置乘法以提高效率
     }
     
     // 逐个验证每个元素
