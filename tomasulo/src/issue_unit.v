@@ -69,7 +69,7 @@ module issue_unit(
     output reg [`InstAddrBus] rs_alu_pc,
     output reg [`InstAddrBus] rs_alu_pred_target,
 
-    // RS MDU (New)
+    // RS MDU
     input wire rs_mdu_full,
     output reg rs_mdu_we,
     output reg [`AluOpBus] rs_mdu_op,
@@ -109,7 +109,7 @@ module issue_unit(
     
     reg [`AluOpBus] alu_op;
     reg is_alu;
-    reg is_mdu;       // New Flag
+    reg is_mdu;
     reg is_load;
     reg is_store;
     reg is_branch;

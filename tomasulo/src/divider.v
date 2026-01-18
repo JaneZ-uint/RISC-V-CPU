@@ -1,8 +1,3 @@
-/*
- * Iterative Divider for RISC-V M-Extension
- * Implementation: Radix-2 Non-Restoring Division
- * Latency: 34 Cycles (approx)
- */
 module divider (
     input wire clk,
     input wire rst,

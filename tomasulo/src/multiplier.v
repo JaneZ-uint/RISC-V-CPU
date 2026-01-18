@@ -1,9 +1,3 @@
-/*
- * High-Speed Pipelined Multiplier for RISC-V M-Extension
- * Implementation: Radix-4 Booth Encoding + Wallace Tree + CLA
- * Latency: 4 Cycles
- */
-
 module multiplier (
     input wire clk,
     input wire rst,
@@ -20,20 +14,15 @@ module multiplier (
     // Stage 1: Pre-processing & Booth Encoding
     // ====================================================================
     
-    // 1.1 Operand Extension (Unified to 33-bit signed)
+    // Operand Extension (Unified to 33-bit signed)
     wire op1_signed = (mode == 2'b00) || (mode == 2'b01) || (mode == 2'b10); // MUL, MULH, MULHSU treat op1 as signed
     wire op2_signed = (mode == 2'b00) || (mode == 2'b01);                   // MUL, MULH treat op2 as signed
     
     wire [32:0] a_ext = { op1_signed & op1[31], op1 };
     wire [32:0] b_ext = { op2_signed & op2[31], op2 };
 
-    // Booth Encoding requires padding with 0 at LSB side and extending sign
-    // B_sext for scanning: {b_ext, 1'b0} -> 34 bits
-    wire [33:0] b_scan = {b_ext, 1'b0};
+    wire [34:0] b_scan = {b_ext[32], b_ext, 1'b0};
 
-    // Generate 17 Partial Products (PP)
-    // Radix-4 Booth: examines 3 bits (b[i+1], b[i], b[i-1])
-    // PP Width: 33 bits + shift + 1 sign + ... make it 66 bits safe
     
     reg [65:0] pp [0:16];
     reg [16:0] neg; // carry bits for "negative" operation (+1)
@@ -60,14 +49,7 @@ module multiplier (
                 3'b110: begin term = ~{ {33{a_ext[32]}}, a_ext }; neg[i] = 1'b1; end // -A
                 3'b111: term = 66'd0;                // 0
             endcase
-            
-            // Shift corresponding to weight 2^(2*i)
-            // And add the 'neg' bit at the correct LSB position is handled in logic or compression
-            // Here we store 'term' and 'neg' separate for next stage or merge them
-            
-            // Correct handling: Store term shifted. 
-            // The 'neg' bit conceptually belongs to LSB of the partial product.
-            // We will feed 'neg' into the compression tree as extra bits.
+
             pp[i] = term << (2*i);
         end
     end
@@ -92,10 +74,6 @@ module multiplier (
     // ====================================================================
     // Stage 2: Wallace Tree Compression (Layer 1 & 2)
     // ====================================================================
-    
-    // We have 17 vectors + 17 carry bits (s1_neg) to sum.
-    // Let's first merge s1_neg into the vectors or treat them as an 18th small vector.
-    // For simplicity of code (structure), we use CSA functions.
     
     // CSA Unit
     function [65:0] csa_sum;
